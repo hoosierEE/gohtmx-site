@@ -1,0 +1,34 @@
+{{ block "index" . }}
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/s/css/style.css">
+    <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <main>
+      <h1>dynamic page!</h1>
+      <p>blabla</p>
+      <a href="/s/example.txt">example link</a>
+      <form hx-post="/a/result" hx-target="#comments" hx-swap="beforeend">
+        <input name="user" type="text" placeholder="username" />
+        <input name="comment" type="text" placeholder="write a comment..." />
+        <button>Send greeting</button>
+      </form>
+      <h2>Comments</h2>
+      <div id="comments">
+        {{ range .Comments }}
+        {{ template "comment" . }}
+        {{ end }}
+      </div>
+    </main>
+  </body>
+</html>
+{{ end }}
+
+{{ block "comment" . }}
+<div class="comment">
+  <div class="metadata"><span class="user">{{.User}}</span></div>
+  <div class="commentary">{{.Comment}}</div>
+</div>
+{{ end }}

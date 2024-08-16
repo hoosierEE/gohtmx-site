@@ -1,0 +1,17 @@
+body {
+    background-color: #efe;
+    margin: 0 auto;
+    max-width: 50em;
+}
+
+#comments .comment:nth-child(odd){
+    background-color: #ded;
+}
+
+.comment {
+    padding: 5px 0;
+}
+
+.metadata {
+    opacity: 70%
+}
