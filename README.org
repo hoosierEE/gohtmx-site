@@ -1,5 +1,28 @@
-* htmx and Go
+* htmx+Go
+The purpose of this repo is learning.
+My career has so far avoided webdev, but occasionally I encounter a problem that a dynamic site would solve.
 
+Even though "nobody got fired for picking React", it seems overkill for the kinds of things I want to make.
+On the other hand, htmx can be a modest incremental addition of dynamic features to otherwise static web pages, which is in my comfort zone.
+
+The backend for an htmx site could be implemented in any programming language.
+I decided to take the opportunity to learn a new language and chose Go.
+Why Go?
+It checks a lot of boxes - reasonably fast runtime, built-in concurrency, fully-featured standard library, and plenty of documentation to draw from.
+
+My first choice was Gleam, but since I'm already learning a new paradigm (dynamic web site + CRUD) and a new language, it felt more prudent to stick with a language with more familiar constructs (imperative/procedural with =for= loops and mutable state).
+Perhaps after building an MVP in Go I'll then try it again in Gleam.
+
+* What have I learned so far?
+** About Go:
+- nice surprise: =append= returns a new array instead of mutating the original
+- Go's syntax is ok, but the symmetry between method and func syntax is one of the high points for the language
+- explicit error handling is nice but sum types would have been better than ~if err != nil~
+** About htmx:
+- I'm more surprised that HTML doesn't /already/ support some of these features
+- seems like a good 80% solution for several common kinds of applications, and doesn't preclude you from using other frameworks
+
+* What's here?
 Web server:
 - serves static files
 - handles dynamic form data
