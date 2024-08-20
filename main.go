@@ -39,7 +39,7 @@ func main() {
 	defer dbpool.Close()
 
 	var greeting string
-	err = dbpool.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
+	err = dbpool.QueryRow(context.Background(), "SELECT username FROM users WHERE id=$1", 1).Scan(&greeting)
 	if err != nil {
 		log.Fatal("QueryRow failed: ", err)
 	}
