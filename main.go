@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserComment struct {
@@ -32,14 +32,14 @@ func main() {
 
 	// pg
 	urlExample := "postgres://ashroyer-admin@localhost:5432/ashroyer-admin"
-	conn, err := pgx.Connect(context.Background(), urlExample)
+	dbpool, err := pgxpool.New(context.Background(), urlExample)
 	if err != nil {
 		log.Fatal("Unable to connect to db:", err)
 	}
-	defer conn.Close(context.Background())
+	defer dbpool.Close()
 
 	var greeting string
-	err = conn.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
+	err = dbpool.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
 	if err != nil {
 		log.Fatal("QueryRow failed: ", err)
 	}
