@@ -29,6 +29,10 @@ Web server:
 - persists state after browser refresh
 - new content updates in-place without full page refresh (thanks to htmx)
 
+Database (PostgreSQL):
+- =setup.sql= to populate tables in an already-existing database
+- =cleanup.sql= to delete the tables
+
 This basic set of functionality comes from ~50 lines of Go, ~35 of HTML (with Go templates) and some CSS.
 
 I'm using [[https://github.com/air-verse/air][air]] to rebuild whenever the dependencies change; it's one less thing to remember (still have to refresh the browser to test some things).

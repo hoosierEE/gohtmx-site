@@ -1,0 +1,29 @@
+{{ block "rss" . }}
+<rss version="2.0">
+  <channel>
+    <title>My BLog</title>
+    <link>www.example.com</link>
+    <description>some rando blog</description>
+    <language>en-us</language>
+    <image>
+      <url>www.example.com/images/image.png</url>
+      <title>Image Title</title>
+      <link>www.example.com</link>
+      <width>320</width>
+      <height>308</height>
+    </image>
+    {{ range .Thumbs }}
+    {{ template "thumbnail" . }}
+    {{ end }}
+  </channel>
+</rss>
+{{ end }}
+
+{{ block "thumbnail" . }}
+<item>
+  <title>{{ .Title }}</title>
+  <link>{{ .Permalink }}</link>
+  <pubDate>{{ .PubDate }}</pubDate>
+  <description>{{ .Summary }}</description>
+</item>
+{{ end }}

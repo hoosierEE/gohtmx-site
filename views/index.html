@@ -2,23 +2,32 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ .Description }}">
     <link rel="stylesheet" href="/s/css/style.css">
-    <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.2"
+            integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+            crossorigin="anonymous"></script>
+    <title>{{ .Title }}</title>
   </head>
+
   <body>
+    <header>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/posts">Posts</a>
+        <a href="/rss.xml">RSS</a>
+      </nav>
+    </header>
     <main>
-      <h1>dynamic page!</h1>
-      <p>blabla</p>
+      <h1>home page</h1>
+      <p>blabla this is some text</p>
       <a href="/s/example.txt">example link</a>
-      <form hx-post="/a/result" hx-target="#comments" hx-swap="beforeend">
-        <input name="user" type="text" placeholder="username" />
-        <input name="comment" type="text" placeholder="write a comment..." />
-        <button>Send greeting</button>
-      </form>
-      <h2>Comments</h2>
-      <div id="comments">
-        {{ range .Comments }}
-        {{ template "comment" . }}
+      <h2 class="posts">Posts</h2>
+      <div id="posts">
+        {{ range .Thumbs }}
+        {{ template "thumb" . }}
         {{ end }}
       </div>
     </main>
@@ -26,9 +35,11 @@
 </html>
 {{ end }}
 
-{{ block "comment" . }}
-<div class="comment">
-  <div class="metadata"><span class="user">{{.User}}</span></div>
-  <div class="commentary">{{.Comment}}</div>
-</div>
+{{ block "thumb" . }}
+<a href="/posts/{{ .Link }}">
+  <div class="post">
+    <h3 class="title">{{ .Title }}</h3>
+    <div class="body">{{ .Summary }}</div>
+  </div>
+</a>
 {{ end }}

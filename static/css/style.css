@@ -2,7 +2,7 @@ body {
     background-color: #efe;
     margin: 0 auto;
     padding: 0.5em;
-    max-width: 50em;
+    max-width: 60em;
 }
 
 #comments .comment:nth-child(odd){
@@ -15,4 +15,22 @@ body {
 
 .metadata {
     opacity: 70%
+}
+
+#posts {
+    display: flex;
+    justify-content: space-between;
+}
+
+.post {
+    flex: 1;
+    box-shadow: 0 4px 5px #0005;
+    border-radius: 10px;
+    /* margin: 2em; */
+    max-width: 14em;
+    padding: 1em;
+}
+
+.post .title {
+
 }
