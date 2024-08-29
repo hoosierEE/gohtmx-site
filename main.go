@@ -21,25 +21,25 @@ func assert(e error) {
 type Site struct {
 	Title       string
 	Description string
+	Content     string
 	Thumbs      []Thumbnail
 }
 
 type Thumbnail struct {
-	Link    string `db:"link"`
-	Title   string `db:"title"`
-	Summary string `db:"summary"`
+	Link    string    `db:"link"`
+	Title   string    `db:"title"`
+	Summary string    `db:"summary"`
+	Date    time.Time `db:"date"`
 }
 
-type Templates struct {
-	templates *template.Template
-}
+type Templates struct{ templates *template.Template }
 
 func (t *Templates) Render(w io.Writer, name string, data interface{}) error {
 	return t.templates.ExecuteTemplate(w, name, data) // named templates woo
 }
 
 func getThumbnails(pool *pgxpool.Pool) []Thumbnail {
-	query := `SELECT link, title, summary FROM posts`
+	query := `SELECT link, title, summary, updated_at AS date FROM posts`
 	rows, err := pool.Query(context.Background(), query)
 	assert(err)
 	defer rows.Close()
@@ -96,49 +96,47 @@ ORDER BY c.created_at DESC`
 	return comments
 }
 
-// func addComment(pool *pgxpool.Pool, postID int, username string, content string) int {
-// 	// first look up userID from username
-// 	uquery := `
-// SELECT id FROM users WHERE username=$1`
-// 	var userID int
-// 	var err error
-// 	err = pool.QueryRow(context.Background(), uquery, username).Scan(&userID)
-// 	log.Print("ran query, got userID: ", userID, err)
-// 	assert(err)
-// 	query := `
-// INSERT INTO comments (post_id, user_id, content, created_at)
-// VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`
-// 	var commentID int
-// 	err = pool.QueryRow(context.Background(), query, postID, userID, content).Scan(&commentID)
-// 	log.Print("ran query, got commentID: ", commentID, err)
-// 	assert(err)
-// 	return commentID
-// }
-
 func main() {
 	pool, err := pgxpool.New(context.Background(), "postgres://postgres@localhost:5432/mysite")
 	assert(err)
 	defer pool.Close()
 
-	ts := &Templates{ // parse all templates up front
-		template.Must(template.ParseGlob("views/*.html")),
-	}
+	// parse templates
+	rssTmpl := &Templates{template.Must(template.ParseFiles("views/rss.xml"))}
+	baseTmpl := &Templates{template.Must(template.ParseFiles("views/base.html"))}
+	postTmpl := &Templates{template.Must(baseTmpl.templates.Clone())}
+	homeTmpl := &Templates{template.Must(baseTmpl.templates.Clone())}
+	template.Must(homeTmpl.templates.ParseFiles("views/index.html"))
+	template.Must(postTmpl.templates.ParseFiles("views/post.html"))
 
 	fileServer := http.FileServer(http.Dir("./static"))         // stored in /static on local fs
 	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // called /s in html templates
 
+	http.HandleFunc("POST /posts/{post}/comments", func(w http.ResponseWriter, r *http.Request) {
+		log.Print("post:", r.PathValue("post"))
+		comment := r.PostFormValue("comment")
+		log.Print("comment:", comment)
+	})
+
 	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
 		post := getPostContent(pool, r.PathValue("post"))
-		log.Print(post)
-
 		comments := getComments(pool, post.ID)
 		post.Comments = comments
-		log.Print(comments)
-
-		err := ts.Render(w, "post", post)
+		log.Print(post)
+		err := postTmpl.Render(w, "base", post)
 		if err != nil {
 			log.Print(err)
 		}
+	})
+
+	http.HandleFunc("GET /rss.xml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		site := Site{
+			Description: "cool website",
+			Title:       "muh blog",
+			Thumbs:      getThumbnails(pool),
+		}
+		assert(rssTmpl.Render(w, "rss", site))
 	})
 
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -147,20 +145,8 @@ func main() {
 			Title:       "muh blog",
 			Thumbs:      getThumbnails(pool),
 		}
-		assert(ts.Render(w, "index", site))
+		assert(homeTmpl.Render(w, "base", site))
 	})
-
-	// http.HandleFunc("/a/result", func(w http.ResponseWriter, r *http.Request) {
-	// 	when := time.Now().UTC()
-	// 	log.Print("comment arrived at time: ", when.String())
-	// 	username := r.PostFormValue("user")
-	// 	content := r.PostFormValue("comment")
-	// 	commentID := addComment(pool, 1, username, content)
-	// 	log.Print("commentID: ", commentID)
-	// 	// TODO: put new comment in db
-	// 	// then re-render just what changed
-	// 	ts.Render(w, "comment", Comment{username, when.String(), content})
-	// })
 
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

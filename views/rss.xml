@@ -1,9 +1,9 @@
 {{ block "rss" . }}
 <rss version="2.0">
   <channel>
-    <title>My BLog</title>
+    <title>{{ .Title }}</title>
     <link>www.example.com</link>
-    <description>some rando blog</description>
+    <description>{{ .Description }}</description>
     <language>en-us</language>
     <image>
       <url>www.example.com/images/image.png</url>
@@ -12,18 +12,16 @@
       <width>320</width>
       <height>308</height>
     </image>
-    {{ range .Thumbs }}
-    {{ template "thumbnail" . }}
-    {{ end }}
+    {{ range .Thumbs }}{{ template "rss-item" . }}{{ end }}
   </channel>
 </rss>
 {{ end }}
 
-{{ block "thumbnail" . }}
+{{ block "rss-item" . }}
 <item>
   <title>{{ .Title }}</title>
-  <link>{{ .Permalink }}</link>
-  <pubDate>{{ .PubDate }}</pubDate>
+  <link>{{ .Link }}</link>
+  <pubDate>{{ .Date }}</pubDate>
   <description>{{ .Summary }}</description>
 </item>
 {{ end }}

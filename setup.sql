@@ -1,9 +1,11 @@
+SET TIME ZONE 'UTC';
+
 CREATE TABLE users (
 id SERIAL PRIMARY KEY,
 username VARCHAR(50) UNIQUE NOT NULL,
 email VARCHAR(254) UNIQUE NOT NULL, -- 254 is not a typo
 password_hash VARCHAR(255) NOT NULL,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE posts (
@@ -13,8 +15,8 @@ title VARCHAR(255) UNIQUE NOT NULL,
 author_id INTEGER NOT NULL,
 summary TEXT NOT NULL, -- metadata for link previews or "abstract/tl;dr" sections
 content TEXT NOT NULL,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (author_id) REFERENCES users(id) -- post remains after author_id deleted
 );
 
@@ -23,8 +25,8 @@ id SERIAL PRIMARY KEY,
 post_id INTEGER NOT NULL, -- comments belong to a post
 user_id INTEGER NOT NULL,
 content TEXT NOT NULL,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, -- delete user's comments if user deleted
 FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE -- delete post's comments if post deleted
 );
@@ -53,7 +55,7 @@ INSERT INTO comments (post_id, user_id, created_at, content) VALUES
 -- then allowing the client to display in local format. But support isn't
 -- implemented (yet): https://docs.timetime.in/blog/js-dates-finally-fixed/
 -- It still might be better to use a polyfill in the meantime.
-CREATE OR REPLACE FUNCTION time_format(timestamp_value timestamp) RETURNS text AS $$
+CREATE OR REPLACE FUNCTION time_format(timestamp_value TIMESTAMPTZ) RETURNS text AS $$
 DECLARE
 diff interval;
 ago text;

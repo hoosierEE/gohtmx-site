@@ -1,63 +1,30 @@
-{{ block "post" . }}
-<!DOCTYPE html>
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ .Summary }}">
-    <!-- <link rel="icon" href="/s/images/favicon.ico" type="image/x-icon"> -->
-    <link rel="stylesheet" href="/s/css/style.css">
-    <script src="https://unpkg.com/htmx.org@2.0.2"
-            integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
-            crossorigin="anonymous"></script>
-    <title>{{ .Title }}</title>
-  </head>
+{{define "title"}}{{.Title}}{{end}}
+{{define "description"}}{{.Summary}}{{end}}
+{{define "content"}}
+<header></header>
+<main>
+  <article>
+    {{.Content}}
+    {{template "comments" .}}
+  </article>
+</main>
+{{end}}
 
-  <body>
-    <header>
-      <nav>
-        <a href="/">Home</a>
-        <a href="/posts">Posts</a>
-        <a href="/rss.xml">RSS</a>
-      </nav>
-    </header>
-    <main>
-      <title>{{ .Title }}</title>
-      <header>{{ .Summary }}</header>
-      <article>
-        {{ .Content }}
-      </article>
-      <footer>
-        {{ template "comments" . }}
-      </footer>
-    </main>
-  </body>
-</html>
-{{ end }}
-
-{{ block "comments" . }}
-<h2>Comments</h2>
-<div id="comments">
-  {{ range .Comments }}
-  {{ template "comment" . }}
-  {{ end }}
+{{block "comments" .}}
+<hr/>
+<div id="comments">{{range .Comments}}{{template "comment" .}}{{end}}</div>
+<div id="addComment">
+  <form hx-post="/posts/{{.Link}}/comments" hx-target="#comments" hx-swap="beforeend">
+    <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..." ></textarea>
+    <br/>
+    <input type="submit" value="add comment">
+  </form>
 </div>
-{{ template "addComment" . }}
-{{ end }}
+{{end}}
 
-{{ block "comment" . }}
+{{block "comment" .}}
 <div class="comment">
   <div class="metadata"><span class="user">{{.Username}}</span> <span class="when">{{.When}}</span></div>
   <div class="commentary">{{.Content}}</div>
 </div>
-{{ end }}
-
-{{ block "addComment" . }}
-<div id="addComment">
-  <form hx-post="/a/{{ .Link }}" hx-target="#comments" hx-swap="beforeend">
-    <input name="user" type="text" placeholder="username" />
-    <input name="comment" type="text" placeholder="write a comment..." />
-    <button>Send greeting</button>
-  </form>
-</div>
-{{ end }}
+{{end}}
