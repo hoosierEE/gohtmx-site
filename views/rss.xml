@@ -1,9 +1,10 @@
-{{ block "rss" . }}
+{{define "canonical"}}https://alexshroyer.com{{end}}
+{{block "rss" .}}
 <rss version="2.0">
   <channel>
-    <title>{{ .Title }}</title>
-    <link>www.example.com</link>
-    <description>{{ .Description }}</description>
+    <title>{{.Title}}</title>
+    <link>{{template "canonical"}}</link>
+    <description>{{.Summary}}</description>
     <language>en-us</language>
     <image>
       <url>www.example.com/images/image.png</url>
@@ -12,16 +13,16 @@
       <width>320</width>
       <height>308</height>
     </image>
-    {{ range .Thumbs }}{{ template "rss-item" . }}{{ end }}
+    {{range .Thumbs}}{{template "rss-item" .}}{{end}}
   </channel>
 </rss>
-{{ end }}
+{{end}}
 
-{{ block "rss-item" . }}
+{{block "rss-item" .}}
 <item>
-  <title>{{ .Title }}</title>
-  <link>{{ .Link }}</link>
-  <pubDate>{{ .Date }}</pubDate>
-  <description>{{ .Summary }}</description>
+  <title>{{.Title}}</title>
+  <link>{{template "canonical"}}/{{.Link}}</link>
+  <pubDate>{{.Date}}</pubDate>
+  <description>{{.Summary}}</description>
 </item>
-{{ end }}
+{{end}}

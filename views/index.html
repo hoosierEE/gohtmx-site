@@ -1,17 +1,43 @@
-{{define "title"}}Home Page{{end}}
-{{define "description"}}this is my home page{{end}}
-{{define "content"}}
-<p>blabla this is some text</p>
-<a href="/s/example.txt">example link</a>
-<h2 class="recent">recent</h2>
-<div class="cards">
-  {{range .Thumbs}}
-  <a href="/posts/{{.Link}}">
-    <div class="post">
-      <h3 class="title">{{.Title}}</h3>
-      <div class="body">{{.Summary}}</div>
-    </div>
-  </a>
-  {{end}}
-</div>
+{{block "home" .}}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{.Summary}}">
+    <link rel="stylesheet" href="/s/css/main.css">
+    <script src="https://unpkg.com/htmx.org@2.0.2"
+            integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+            crossorigin="anonymous"></script>
+    <title>{{.Title}}</title>
+  </head>
+  <body>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/posts">Posts</a>
+      <a href="/papers">Papers</a>
+      <a href="/projects">Projects</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <main>
+      {{.Content}}
+      {{if .Thumbs}}
+      <h2 class="recent">recent</h2>
+      <div class="cards">
+        {{range .Thumbs}}
+        <a href="/posts/{{.Link}}">
+          <div class="post">
+            <h3 class="title">{{.Title}}</h3>
+            <div class="body">{{.Summary}}</div>
+          </div>
+        </a>
+        {{end}}
+      </div>
+      {{else}}
+      <p>404 not found</p>
+      {{end}}
+    </main>
+    <footer>footer goes here</footer>
+  </body>
+</html>
 {{end}}

@@ -19,10 +19,10 @@ func assert(e error) {
 }
 
 type Site struct {
-	Title       string
-	Description string
-	Content     string
-	Thumbs      []Thumbnail
+	Title   string
+	Summary string
+	Content string
+	Thumbs  []Thumbnail
 }
 
 type Thumbnail struct {
@@ -102,12 +102,7 @@ func main() {
 	defer pool.Close()
 
 	// parse templates
-	rssTmpl := &Templates{template.Must(template.ParseFiles("views/rss.xml"))}
-	baseTmpl := &Templates{template.Must(template.ParseFiles("views/base.html"))}
-	postTmpl := &Templates{template.Must(baseTmpl.templates.Clone())}
-	homeTmpl := &Templates{template.Must(baseTmpl.templates.Clone())}
-	template.Must(homeTmpl.templates.ParseFiles("views/index.html"))
-	template.Must(postTmpl.templates.ParseFiles("views/post.html"))
+	ts := &Templates{template.Must(template.ParseGlob("views/*"))}
 
 	fileServer := http.FileServer(http.Dir("./static"))         // stored in /static on local fs
 	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // called /s in html templates
@@ -122,30 +117,26 @@ func main() {
 		post := getPostContent(pool, r.PathValue("post"))
 		comments := getComments(pool, post.ID)
 		post.Comments = comments
-		log.Print(post)
-		err := postTmpl.Render(w, "base", post)
+		err := ts.Render(w, "post", post)
 		if err != nil {
 			log.Print(err)
 		}
 	})
 
-	http.HandleFunc("GET /rss.xml", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/xml")
-		site := Site{
-			Description: "cool website",
-			Title:       "muh blog",
-			Thumbs:      getThumbnails(pool),
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		pat := r.URL.String()
+		site := Site{"cool website", "mah blog", "some content goes here", nil}
+		switch pat {
+		case "/":
+			site.Thumbs = getThumbnails(pool)
+			assert(ts.Render(w, "home", site))
+		case "/rss.xml":
+			site.Thumbs = getThumbnails(pool)
+			w.Header().Set("Content-Type", "application/xml")
+			assert(ts.Render(w, "rss", site))
+		default:
+			assert(ts.Render(w, "home", site))
 		}
-		assert(rssTmpl.Render(w, "rss", site))
-	})
-
-	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		site := Site{
-			Description: "cool website",
-			Title:       "muh blog",
-			Thumbs:      getThumbnails(pool),
-		}
-		assert(homeTmpl.Render(w, "base", site))
 	})
 
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
