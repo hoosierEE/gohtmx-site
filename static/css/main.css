@@ -1,15 +1,50 @@
+:root{
+    --bgcolor:#fff7ea;
+    --fgcolor:#623;
+    --accent0:#079;
+    --accent1:#eee7da;
+    --td-gray:gray;
+    --td-lightgray:#d3d3d3;
+    --src-bg:#eee6d9;
+    --src-fg:#734;
+    --maxwid:48em;
+    --white:floralwhite;
+}
+@media(prefers-color-scheme:dark){
+    :root{
+        --fgcolor:#fff7ea;
+        --bgcolor:#448;
+        --accent0:#205a;
+        --accent1:#66a;
+        --src-bg:#205a;
+        --src-fg:#eee6d9}
+    img:not([src$=".svg"]){filter:brightness(90%)}
+    img[src$=".svg"]{filter:invert(.8)}
+}
+
 #addComment {padding: 1em 0;}
-#comments .comment:nth-child(odd){background-color: #ded;}
+#comments .comment:nth-child(odd){background-color: var(--accent1);}
+.about-section{display:flex;align-items:center;gap:1em;}
+.pfp{width:9em;height:8.5em;border-radius:50%;}
 .cards {display: flex; gap:0.5em;}
 .comment {padding: 5px 0;}
 .metadata {opacity: 70%}
 .post {flex: 1; box-shadow: 0 1px 2px 0 #0005; max-width: 14em; padding: 1em;}
-body {background-color: #efe; margin: 0 auto; padding: 0.5em; max-width: 55em; font-family: system-ui;}
-form textarea {width: 100%;}
-form {display: flex; flex-direction: column; align-items: flex-start;}
-main > * {padding: 0.5em 0;}
-main header h1 {font-size: 4em; font-family: system-ui;}
-main header p {font-style: italic;}
-nav {display:flex; justify-content:space-between;padding: 1em 0; border-bottom:1px solid #000;}
+a{color:var(--fgcolor);}
+body>footer{position:sticky;top:100vh;}
+body{background:var(--bgcolor);color:var(--fgcolor);font-family:system-ui;height:100%;margin:0;min-height:100vh;}
+footer svg{fill:var(--white);}
+footer{font-size:smaller;}
+footer{margin:0;padding:2em;text-align:center;}
+form textarea{width:100%;}
+form{display:flex;flex-direction:column;align-items:flex-start;}
+h1,h2,h3,h4{font-weight:99}
+header, footer{background:var(--accent0);}
+main{margin:auto;padding:0 1em;max-width:var(--maxwid);}
 nav a {text-decoration:none;}
-nav a:hover {text-decoration:underline;}
+nav a, footer, footer a{color:var(--white);}
+nav a:first-child{margin-right:10em;}
+nav a:hover{text-decoration:underline;}
+nav{margin:auto;padding:1em;max-width:var(--maxwid);display:flex; justify-content:space-between;}
+svg{fill:var(--fgcolor)}
+textarea{background:var(--accent1);}

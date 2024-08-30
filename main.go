@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -18,6 +17,9 @@ func assert(e error) {
 	}
 }
 
+type PageData struct {
+}
+
 type Site struct {
 	Title   string
 	Summary string
@@ -30,12 +32,6 @@ type Thumbnail struct {
 	Title   string    `db:"title"`
 	Summary string    `db:"summary"`
 	Date    time.Time `db:"date"`
-}
-
-type Templates struct{ templates *template.Template }
-
-func (t *Templates) Render(w io.Writer, name string, data interface{}) error {
-	return t.templates.ExecuteTemplate(w, name, data) // named templates woo
 }
 
 func getThumbnails(pool *pgxpool.Pool) []Thumbnail {
@@ -96,13 +92,17 @@ ORDER BY c.created_at DESC`
 	return comments
 }
 
+func herr(w http.ResponseWriter, e error) {
+	http.Error(w, e.Error(), http.StatusInternalServerError)
+}
+
 func main() {
 	pool, err := pgxpool.New(context.Background(), "postgres://postgres@localhost:5432/mysite")
 	assert(err)
 	defer pool.Close()
 
 	// parse templates
-	ts := &Templates{template.Must(template.ParseGlob("views/*"))}
+	ts := template.Must(template.ParseGlob("views/*"))
 
 	fileServer := http.FileServer(http.Dir("./static"))         // stored in /static on local fs
 	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // called /s in html templates
@@ -117,25 +117,30 @@ func main() {
 		post := getPostContent(pool, r.PathValue("post"))
 		comments := getComments(pool, post.ID)
 		post.Comments = comments
-		err := ts.Render(w, "post", post)
+		err := ts.ExecuteTemplate(w, "post", post)
 		if err != nil {
-			log.Print(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Alex Shroyer",
+			Summary: "research and hobbies of a computer engineer",
+			Content: "",
+			Thumbs:  nil,
+		}
 		pat := r.URL.String()
-		site := Site{"cool website", "mah blog", "some content goes here", nil}
 		switch pat {
 		case "/":
 			site.Thumbs = getThumbnails(pool)
-			assert(ts.Render(w, "home", site))
+			assert(ts.ExecuteTemplate(w, "index", site))
 		case "/rss.xml":
 			site.Thumbs = getThumbnails(pool)
 			w.Header().Set("Content-Type", "application/xml")
-			assert(ts.Render(w, "rss", site))
+			assert(ts.ExecuteTemplate(w, "rss", site))
 		default:
-			assert(ts.Render(w, "home", site))
+			assert(ts.ExecuteTemplate(w, "index", site))
 		}
 	})
 
