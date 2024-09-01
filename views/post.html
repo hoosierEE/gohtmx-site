@@ -1,36 +1,45 @@
 {{define "post"}}
-    {{template "base" .}}
+{{template "base" .}}
 {{end}}
 
 {{define "summary"}}research and hobbies of a computer engineer{{end}}
-
 {{define "title"}}Home{{end}}
-
 {{define "content"}}
-hello world
-      <article>
-        <h1>{{.Title}}</h1>
-        <blockquote>{{.Summary}}</blockquote>
-        {{.Content}}
-        <hr>
-        {{template "comments" .}}
-      </article>
+<article>
+  <h1>{{.Title}}</h1>
+  <blockquote>{{.Summary}}</blockquote>
+  {{.Content}}
+  {{template "comments" .}}
+</article>
 {{end}}
 
 {{block "comments" .}}
 <div id="comments">{{range .Comments}}{{template "comment" .}}{{end}}</div>
 <div id="addComment">
-  <form hx-post="/posts/{{.Link}}/comments" hx-target="#comments" hx-swap="beforeend">
-    <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..." ></textarea>
-    <br/>
-    <input type="submit" value="add comment">
-  </form>
+  {{template "form" .}}
 </div>
+{{end}}
+
+{{block "form" .}}
+<form hx-post="/posts/{{.Link}}/comment" hx-swap="outerHTML">
+  <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..."></textarea>
+  <br/>
+  <input type="submit" value="add comment">
+</form>
 {{end}}
 
 {{block "comment" .}}
 <div class="comment">
   <div class="metadata"><span class="user">{{.Username}}</span> <span class="when">{{.When}}</span></div>
   <div class="commentary">{{.Content}}</div>
+</div>
+{{end}}
+
+{{block "oob-comment" .}}
+<div hx-swap-oob="beforeend:#comments">
+  <div class="comment">
+    <div class="metadata"><span class="user">{{.Username}}</span> <span class="when">{{.When}}</span></div>
+    <div class="commentary">{{.Content}}</div>
+  </div>
 </div>
 {{end}}
