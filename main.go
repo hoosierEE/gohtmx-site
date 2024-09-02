@@ -17,6 +17,11 @@ func assert(e error) {
 	}
 }
 
+type User struct {
+	Name    string
+	Session string
+}
+
 type Site struct {
 	Title    string
 	Summary  string
@@ -34,14 +39,14 @@ type Thumbnail struct {
 	Date    time.Time `db:"date"`
 }
 
-func getThumbnails(pool *pgxpool.Pool) []Thumbnail {
+func getThumbnails(pool *pgxpool.Pool) ([]Thumbnail, error) {
 	query := `SELECT link, title, summary, updated_at AS date FROM posts`
 	rows, err := pool.Query(context.Background(), query)
-	assert(err)
 	defer rows.Close()
-	thums, err := pgx.CollectRows(rows, pgx.RowToStructByName[Thumbnail])
-	assert(err)
-	return thums
+	if err != nil {
+		return []Thumbnail{}, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByName[Thumbnail])
 }
 
 type Post struct {
@@ -51,28 +56,27 @@ type Post struct {
 	Summary   string    `db:"summary"`
 	Author    string    `db:"author"`
 	Content   string    `db:"content"`
-	Session   string    `db:"-"`
 	UpdatedAt time.Time `db:"updated_at"`
 	Comments  []Comment `db:"-"`
 }
 
-func getPostContent(pool *pgxpool.Pool, link string) Post {
+func getPostContent(pool *pgxpool.Pool, link string) (Post, error) {
 	query := `
 SELECT p.id, link, title, summary, u.username AS author, content, updated_at
 FROM posts p
 JOIN users u ON p.author_id = u.id
 WHERE p.link = $1`
 	rows, err := pool.Query(context.Background(), query, link)
-	assert(err)
 	defer rows.Close()
-	post, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Post])
-	assert(err)
-	return post
+	if err != nil {
+		return Post{}, err
+	}
+	return pgx.CollectOneRow(rows, pgx.RowToStructByName[Post])
 }
 
 type Comment struct {
 	Username string `db:"username"`
-	When     string `db:"when"` // When     time.Time `db:"when"`
+	When     string `db:"when"`
 	Content  string `db:"content"`
 }
 
@@ -92,7 +96,7 @@ ORDER BY c.created_at ASC`
 	return comments
 }
 
-func postComment(pool *pgxpool.Pool, postID, userID int, content string) []Comment {
+func postComment(pool *pgxpool.Pool, postID, userID int, content string) ([]Comment, error) {
 	query := `
 WITH rows AS
 (INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING *)
@@ -101,26 +105,27 @@ FROM rows c JOIN users u ON
 c.user_id = u.id`
 	rows, err := pool.Query(context.Background(), query, postID, userID, content)
 	defer rows.Close()
-	assert(err)
-	comment, err := pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
-	assert(err)
-	return comment
+	if err != nil {
+		return []Comment{}, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 }
 
 func parseTemplates(prefix string) map[string]*template.Template {
 	var err error
-	base := template.Must(template.ParseFiles(prefix + "base.html"))
-	html := [3]string{"index", "post", "404"}
 	t := make(map[string]*template.Template)
+	base := template.Must(template.ParseFiles(prefix + "base.html"))
+	t["base"] = base
 	t["rss"], err = template.Must(base.Clone()).ParseFiles(prefix + "rss.xml")
 	if err != nil {
 		log.Fatal("error parsing ", prefix+"rss.xml")
 	}
+	html := []string{"index", "post", "404"}
 	for _, h := range html {
 		name := prefix + h + ".html"
 		t[h], err = template.Must(base.Clone()).ParseFiles(name)
 		if err != nil {
-			log.Fatal("error parsing ", name)
+			log.Fatal("error parsing ", name, " Error: ", err)
 		}
 	}
 	return t
@@ -132,26 +137,70 @@ func main() {
 	defer pool.Close()
 
 	ts := parseTemplates("views/")
+	var user User
 
 	fileServer := http.FileServer(http.Dir("./static"))         // "/static" (on local fs)
 	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // "/s" (in html templates)
 
 	http.HandleFunc("POST /posts/{link}/comment", func(w http.ResponseWriter, r *http.Request) {
-		data := getPostContent(pool, r.PathValue("link"))
-		comment := r.PostFormValue("comment")
-		comments := postComment(pool, data.ID, 1, comment)
-		err = ts["post"].ExecuteTemplate(w, "oob-comment", comments[0])
-		err = ts["post"].ExecuteTemplate(w, "form", data) // replace the form with an empty form
-		assert(err)
+		data, err := getPostContent(pool, r.PathValue("link"))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		comments, err := postComment(pool, data.ID, 1, r.PostFormValue("comment"))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		if val, ok := ts["post"]; ok {
+			assert(val.ExecuteTemplate(w, "oob-comment", comments[0])) // update the comments
+			assert(val.ExecuteTemplate(w, "form", data))               // replace form with an empty one
+		}
+	})
+
+	http.HandleFunc("GET /modal-content", func(w http.ResponseWriter, r *http.Request) {
+		assert(ts["base"].ExecuteTemplate(w, "login-container", nil))
+	})
+
+	http.HandleFunc("GET /close-modal", func(w http.ResponseWriter, r *http.Request) {
+		reply := `<div id="modal-container" style="display:none;"></div>`
+		w.Write([]byte(reply))
+	})
+
+	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		username := r.PostFormValue("username")
+		password := r.PostFormValue("password")
+		if username == "asdf" && password == "hjkl" {
+			user.Name = username
+			user.Session = "1234"
+			w.Write([]byte("<p>login success!</p>"))
+		} else {
+			w.Write([]byte("Login"))
+		}
+		log.Print("user:", username)
 	})
 
 	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
-		data := getPostContent(pool, r.PathValue("post"))
-		comments := getComments(pool, data.ID)
-		data.Comments = comments
-		err := ts["post"].ExecuteTemplate(w, "post", data)
+		data, err := getPostContent(pool, r.PathValue("post"))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+			log.Print(err)
+			return
+		}
+		mrgd := struct {
+			Post
+			User
+		}{data, user}
+		comments := getComments(pool, data.ID)
+		mrgd.Comments = comments
+		if val, ok := ts["post"]; ok {
+			err := val.ExecuteTemplate(w, "post", mrgd)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		} else {
+			log.Print("no key `post` in ts")
 		}
 	})
 
@@ -159,13 +208,18 @@ func main() {
 		site := Site{
 			Title:   "Alex Shroyer",
 			Summary: "research and hobbies of a computer engineer",
+			Session: user.Session,
+		}
+
+		site.Thumbs, err = getThumbnails(pool)
+		if err != nil {
+			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+			return
 		}
 		switch r.URL.String() {
 		case "/":
-			site.Thumbs = getThumbnails(pool)
 			assert(ts["index"].ExecuteTemplate(w, "index", site))
 		case "/rss.xml":
-			site.Thumbs = getThumbnails(pool)
 			w.Header().Set("Content-Type", "application/xml")
 			assert(ts["rss"].ExecuteTemplate(w, "rss", site))
 		default:

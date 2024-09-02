@@ -23,7 +23,6 @@
 {{block "form" .}}
 <form hx-post="/posts/{{.Link}}/comment" hx-swap="outerHTML">
   <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..."></textarea>
-  <br/>
   <input type="submit" value="add comment">
 </form>
 {{end}}
