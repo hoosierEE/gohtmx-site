@@ -28,6 +28,7 @@ type Site struct {
 	Content  string
 	Link     string
 	Session  string
+	Display  string
 	Thumbs   []Thumbnail
 	Comments []Comment
 }
@@ -58,6 +59,7 @@ type Post struct {
 	Content   string    `db:"content"`
 	UpdatedAt time.Time `db:"updated_at"`
 	Comments  []Comment `db:"-"`
+	Display   string    `db:"-"`
 }
 
 func getPostContent(pool *pgxpool.Pool, link string) (Post, error) {
@@ -111,8 +113,18 @@ c.user_id = u.id`
 	return pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 }
 
-func ExTmpl(t Templates) {
-
+func validLogin(username, password string) bool {
+	users := map[string]string{
+		"asdf":       "asdf",
+		"jane_smith": "asdf",
+		"john_doe":   "asdf",
+	}
+	if val, ok := users[username]; ok {
+		if password == val {
+			return true
+		}
+	}
+	return false
 }
 
 type Templates map[string]*template.Template
@@ -167,9 +179,8 @@ func main() {
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
 		user.Session = ""
-		w.Write(
-			[]byte(
-				`<a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
+		w.Write([]byte(`
+<a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
 	})
 
 	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
@@ -184,19 +195,34 @@ func main() {
 		// login either succeeds or fails
 		// if success: - close modal and update .Session
 		// else: display fail message then back to login form
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		username := r.PostFormValue("username")
 		password := r.PostFormValue("password")
-		if username == "asdf" && password == "asdf" {
+		if validLogin(username, password) {
+			sessionToken := "some-random-thing-for:" + username
+			http.SetCookie(w, &http.Cookie{
+				Name:     "session_token",
+				Value:    sessionToken,
+				HttpOnly: true,
+				Secure:   true,
+				MaxAge:   3600,
+			})
 			user.Name = username
 			user.Session = "1234"
-			w.Write([]byte(`<div id="login-container" hx-swap="outerHTML" style="display:none;"></div>`))
+			log.Printf("login success [user: %s]", username)
+			// w.Write([]byte(`<div id="login-container" hx-swap="outerHTML" style="display:none;"></div>`))
+			ts["base"].ExecuteTemplate(w, "login-container", struct{ Display string }{"none"})
 			ts["base"].ExecuteTemplate(w, "login-logout", user)
-			// <a id="sessionNav" href="" hx-get="/logout" hx-swap-oob="true">Logout</a>
 		} else {
-			w.Write([]byte(`<p>invalid login</p>`))
+			log.Print("[login failure], user: ", username)
+			ts["base"].ExecuteTemplate(w, "login-container", struct{ Display string }{"none"})
+			// w.Write([]byte(`<p>invalid login</p>`))
+			// TODO:
 			// w.Write([]byte(`<div id="login-container" style="display:none;"></div>`))
 		}
-		log.Print("user:", username)
 	})
 
 	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
@@ -212,6 +238,7 @@ func main() {
 		}{data, user}
 		comments := getComments(pool, data.ID)
 		merged.Comments = comments
+		merged.Display = "none"
 		if val, ok := ts["post"]; ok {
 			err := val.ExecuteTemplate(w, "post", merged)
 			if err != nil {
@@ -226,6 +253,7 @@ func main() {
 		site := Site{
 			Title:   "Alex Shroyer",
 			Summary: "research and hobbies of a computer engineer",
+			Display: "none",
 			Session: user.Session, // TODO implement actual session handling in db
 		}
 
