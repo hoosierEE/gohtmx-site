@@ -111,7 +111,13 @@ c.user_id = u.id`
 	return pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 }
 
-func parseTemplates(prefix string) map[string]*template.Template {
+func ExTmpl(t Templates) {
+
+}
+
+type Templates map[string]*template.Template
+
+func parseTemplates(prefix string) Templates {
 	var err error
 	t := make(map[string]*template.Template)
 	base := template.Must(template.ParseFiles(prefix + "base.html"))
@@ -159,24 +165,36 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
+		user.Session = ""
+		w.Write(
+			[]byte(
+				`<a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
+	})
+
+	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<div id="login-container" style="display:none;"></div>`))
+	})
+
 	http.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
 		assert(ts["base"].ExecuteTemplate(w, "login-container", nil))
 	})
 
-	http.HandleFunc("GET /close-modal", func(w http.ResponseWriter, r *http.Request) {
-		reply := `<div id="login-container" style="display:none;"></div>`
-		w.Write([]byte(reply))
-	})
-
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		// login either succeeds or fails
+		// if success: - close modal and update .Session
+		// else: display fail message then back to login form
 		username := r.PostFormValue("username")
 		password := r.PostFormValue("password")
-		if username == "asdf" && password == "hjkl" {
+		if username == "asdf" && password == "asdf" {
 			user.Name = username
 			user.Session = "1234"
-			w.Write([]byte("<p>login success!</p>"))
+			w.Write([]byte(`<div id="login-container" hx-swap="outerHTML" style="display:none;"></div>`))
+			ts["base"].ExecuteTemplate(w, "login-logout", user)
+			// <a id="sessionNav" href="" hx-get="/logout" hx-swap-oob="true">Logout</a>
 		} else {
-			w.Write([]byte("Login"))
+			w.Write([]byte(`<p>invalid login</p>`))
+			// w.Write([]byte(`<div id="login-container" style="display:none;"></div>`))
 		}
 		log.Print("user:", username)
 	})
@@ -188,14 +206,14 @@ func main() {
 			log.Print(err)
 			return
 		}
-		mrgd := struct {
+		merged := struct {
 			Post
 			User
 		}{data, user}
 		comments := getComments(pool, data.ID)
-		mrgd.Comments = comments
+		merged.Comments = comments
 		if val, ok := ts["post"]; ok {
-			err := val.ExecuteTemplate(w, "post", mrgd)
+			err := val.ExecuteTemplate(w, "post", merged)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -208,7 +226,7 @@ func main() {
 		site := Site{
 			Title:   "Alex Shroyer",
 			Summary: "research and hobbies of a computer engineer",
-			Session: user.Session,
+			Session: user.Session, // TODO implement actual session handling in db
 		}
 
 		site.Thumbs, err = getThumbnails(pool)
@@ -224,6 +242,7 @@ func main() {
 			assert(ts["rss"].ExecuteTemplate(w, "rss", site))
 		default:
 			w.WriteHeader(http.StatusNotFound)
+			site.Title = "not found"
 			assert(ts["404"].ExecuteTemplate(w, "404", site))
 		}
 	})

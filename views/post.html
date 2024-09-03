@@ -2,8 +2,10 @@
 {{template "base" .}}
 {{end}}
 
-{{define "summary"}}research and hobbies of a computer engineer{{end}}
-{{define "title"}}Home{{end}}
+{{define "summary"}}{{.Summary}}{{end}}
+
+{{define "title"}}{{.Title}}{{end}}
+
 {{define "content"}}
 <article>
   <h1>{{.Title}}</h1>
