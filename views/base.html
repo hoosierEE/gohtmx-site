@@ -5,6 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{template `summary` .}}">
+    <meta name="htmx-config"
+          content='{"responseHandling":[
+                   {"code":"204", "swap": false},
+                   {"code":"[23]..", "swap": true},
+                   {"code":"422", "swap": true},
+                   {"code":"[45]..", "swap": false, "error":true},
+                   {"code":"...", "swap": true}
+                   ]}'>
     <link rel="stylesheet" href="/s/css/main.css">
     <link rel="icon" href="/s/images/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@2.0.2"
@@ -14,7 +22,7 @@
   </head>
   <body>
 
-    <div id="login-container" style="display: none;"></div>
+    {{template "login-container" .}}
 
     <header>
       <nav>
@@ -44,21 +52,22 @@
             <g><path d="M34,2.5v29A2.5,2.5,0,0,1,31.5,34H2.5A2.5,2.5,0,0,1,0,31.5V2.5A2.5,2.5,0,0,1,2.5,0h29A2.5,2.5,0,0,1,34,2.5ZM10,13H5V29h5Zm.45-5.5A2.88,2.88,0,0,0,7.59,4.6H7.5a2.9,2.9,0,0,0,0,5.8h0a2.88,2.88,0,0,0,2.95-2.81ZM29,19.28c0-4.81-3.06-6.68-6.1-6.68a5.7,5.7,0,0,0-5.06,2.58H17.7V13H13V29h5V20.49a3.32,3.32,0,0,1,3-3.58h.19c1.59,0,2.77,1,2.77,3.52V29h5Z" ></path></g></svg></a>
       </div>
     </footer>
-    {{template "scripts"}}
     <script>
       document.body.addEventListener('keyup', e=>{
         if (e.key == 'Escape'){
           htmx.trigger(document.body, 'escapePressed')
         }
       })
+      // document.addEventListener('DOMContentLoaded', ()=>{
+      //   document.querySelector('#login-container').style.display='none';
+      // })
     </script>
   </body>
 </html>
 {{end}}
-{{define "scripts"}}{{end}}
 
 {{block "login-container" .}}
-<div id="login-container">
+<div id="login-container" style="display:{{.Display}}">
   <div class="login-content">
     <a href="#" class="close-button"
        hx-trigger="escapePressed from:body, click"
@@ -79,7 +88,7 @@
 
 {{block "login-logout" .}}
 {{if .Session}}
-<a id="sessionNav" href="" hx-get="/logout" hx-swap-oob="true">Logout</a>
+<a id="sessionNav" href="/logout" hx-get="/logout" hx-swap-oob="true">Logout</a>
 {{else}}
 <a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>
 {{end}}
