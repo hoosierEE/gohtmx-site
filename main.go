@@ -159,12 +159,12 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("GET /modal-content", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
 		assert(ts["base"].ExecuteTemplate(w, "login-container", nil))
 	})
 
 	http.HandleFunc("GET /close-modal", func(w http.ResponseWriter, r *http.Request) {
-		reply := `<div id="modal-container" style="display:none;"></div>`
+		reply := `<div id="login-container" style="display:none;"></div>`
 		w.Write([]byte(reply))
 	})
 

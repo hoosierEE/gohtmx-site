@@ -13,6 +13,9 @@
     <title>{{template "title" .}}</title>
   </head>
   <body>
+
+    <div id="login-container" style="display: none;"></div>
+
     <header>
       <nav>
         <a href="/">Home</a>
@@ -23,12 +26,10 @@
         {{if .Session}}
         <a href="/logout">Logout</a>
         {{else}}
-        <a href="/login" hx-get="/modal-content" hx-target="#modal-container" hx-swap="outerHTML">Login</a>
+        <a href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>
         {{end}}
       </nav>
     </header>
-
-    <div id="modal-container" style="display: none;"></div>
 
     <main>
       {{template "content" .}}
@@ -54,9 +55,9 @@
 {{define "scripts"}}{{end}}
 
 {{block "login-container" .}}
-<div id="modal-container" class="modal">
-  <div class="modal-content">
-    <button hx-get="/close-modal" hx-target="#modal-container" hx-swap="outerHTML">cancel</button>
+<div id="login-container" class="modal">
+  <div class="login-content">
+    <a href="#" class="close-button" hx-get="/close-modal" hx-target="#login-container" hx-swap="outerHTML">x</a>
     <h3>sign in</h3>
     <form hx-post="/login">
       <label for="name">Username:</label>
