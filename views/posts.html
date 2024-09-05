@@ -1,0 +1,21 @@
+{{define "posts"}}
+{{template "base" .}}
+{{end}}
+
+{{define "summary"}}all posts{{end}}
+
+{{define "title"}}Posts{{end}}
+
+{{block "content" .}}
+<h2>All Posts</h2>
+<div class="cards">
+  {{range .Thumbs}}
+  <a href="/posts/{{.Link}}">
+    <div class="card">
+      <h3 class="title">{{.Title}}</h3>
+      <div class="body">{{.Summary}}</div>
+    </div>
+  </a>
+  {{end}}
+</div>
+{{end}}

@@ -2,11 +2,13 @@
 {{template "base" .}}
 {{end}}
 
-{{define "summary"}}{{.Summary}}{{end}}
+{{define "summary"}}{{end}}
 
 {{define "title"}}{{.Title}}{{end}}
 
 {{define "content"}}
 <h2>page not found</h2>
-<iframe width="100%" height="400" src="https://www.youtube.com/embed/TkWXDAcREJE" title="Katatonia- The One You Are Looking For Is Not Here" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<div class="video-container">
+  <iframe width="1265" height="720" src="https://www.youtube.com/embed/TkWXDAcREJE" title="Katatonia- The One You Are Looking For Is Not Here" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
 {{end}}

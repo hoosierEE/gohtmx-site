@@ -11,26 +11,227 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type Site struct {
+	Title   string
+	Summary string
+	Content string
+	Profile string
+	Thumbs  []Thumbnail
+}
+
+var users = map[string]string{
+	"asdf":     "asdf",
+	"john_doe": "asdf",
+}
+
+var sessions = map[string]Session{}
+
+type Session struct {
+	username string
+	expires  time.Time
+}
+
+func (s *Session) isExpired() bool {
+	return s.expires.Before(time.Now())
+}
+
+func validLogin(username, password string) bool {
+	val, ok := users[username]
+	return ok && val == password
+}
+
+func validSession(token string) (Session, bool) {
+	data, ok := sessions[token]
+	if ok && !data.isExpired() {
+		return data, ok
+	}
+	return Session{}, false
+}
+
+func getSession(r *http.Request) (Session, bool) {
+	cookie, err := r.Cookie("session_token")
+	if err == nil {
+		token := cookie.Value
+		return validSession(token)
+	}
+	return Session{}, false
+}
+
+func main() {
+	pool, err := pgxpool.New(context.Background(), "postgres://postgres@localhost:5432/mysite")
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	defer pool.Close()
+
+	var ts Templates = parseTemplates("views/")
+
+	fileServer := http.FileServer(http.Dir("./static"))         // "/static" (on local fs)
+	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // "/s" (in html templates)
+
+	http.HandleFunc("POST /posts/{link}/comment", func(w http.ResponseWriter, r *http.Request) {
+		data, err := getPostContent(pool, r.PathValue("link"))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		comments, err := postComment(pool, data.ID, 1, r.PostFormValue("comment"))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		if val, ok := ts["post"]; ok {
+			assert(val.ExecuteTemplate(w, "oob-comment", comments[0])) // update the comments
+			assert(val.ExecuteTemplate(w, "form", data))               // replace form with an empty one
+		}
+	})
+
+	// http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
+	// 	w.Write([]byte(`
+	// <a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
+	// })
+
+	http.HandleFunc("GET /profile", func(w http.ResponseWriter, r *http.Request) {
+		assert(ts["profile"].ExecuteTemplate(w, "profile", nil))
+	})
+
+	// returning nothing works!
+	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {})
+
+	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			log.Print(err)
+		}
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		if validLogin(username, password) {
+			w.Write([]byte(`<span id="nav-name" hx-swap-oob="#nav-name">` + username + `</span>`))
+			log.Print("correct!")
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			data := struct {
+				Username string
+				Error    string
+			}{username, "Incorrect username or password"}
+			assert(ts["profile"].ExecuteTemplate(w, "profile", data))
+			log.Print("wrong")
+		}
+
+		// TODO - handle error
+		// w.Write([]byte(`<div id="login-target" style="display:none;></div>"`))
+	})
+
+	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
+		data, err := getPostContent(pool, r.PathValue("post"))
+		if err != nil {
+			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+			log.Printf("getPostContent failed: %v", err)
+			return
+		}
+
+		// FIXME: copypasta
+		session, ok := getSession(r)
+		if ok {
+			data.Profile = "Hello " + session.username
+		} else {
+			data.Profile = "Login"
+		}
+
+		data.Comments = getComments(pool, data.ID)
+		if val, ok := ts["post"]; ok {
+			err := val.ExecuteTemplate(w, "post", data)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		} else {
+			log.Print("no key `post` in ts")
+		}
+	})
+
+	http.HandleFunc("GET /posts", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Posts",
+			Summary: "all posts",
+			Content: "",
+			Profile: "Login",
+			Thumbs:  []Thumbnail{},
+		}
+
+		// FIXME: copypasta
+		session, ok := getSession(r)
+		if ok {
+			site.Profile = "Hello " + session.username
+		} else {
+			site.Profile = "Login"
+		}
+
+		site.Thumbs, err = getThumbnails(pool, -1)
+		if err != nil {
+			log.Printf("[thumbnails] %v", err)
+			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+		}
+		assert(ts["posts"].ExecuteTemplate(w, "posts", site))
+	})
+
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Alex Shroyer",
+			Summary: "research and hobbies of a computer engineer",
+			Content: "",
+			Profile: "Profile",
+			Thumbs:  []Thumbnail{},
+		}
+
+		// FIXME: copypasta
+		session, ok := getSession(r)
+		if ok {
+			site.Profile = "Hello " + session.username
+		} else {
+			site.Profile = "Login"
+		}
+
+		if site.Thumbs, err = getThumbnails(pool, 2); err != nil {
+			log.Printf("[thumbnails] %v", err)
+			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+		}
+		switch r.URL.String() {
+		case "/":
+			assert(ts["index"].ExecuteTemplate(w, "index", site))
+		case "/rss.xml":
+			w.Header().Set("Content-Type", "application/xml")
+			assert(ts["rss"].ExecuteTemplate(w, "rss", site))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			site.Title = "not found"
+			assert(ts["404"].ExecuteTemplate(w, "404", site))
+		}
+	})
+
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+}
+
+func getThumbnails(pool *pgxpool.Pool, limit int) ([]Thumbnail, error) {
+	var rows pgx.Rows
+	var err error
+	if limit > 0 {
+		query := `SELECT link, title, summary, updated_at AS date FROM posts LIMIT $1`
+		rows, err = pool.Query(context.Background(), query, limit)
+	} else {
+		query := `SELECT link, title, summary, updated_at AS date FROM posts`
+		rows, err = pool.Query(context.Background(), query)
+	}
+	if err != nil {
+		return []Thumbnail{}, err
+	}
+	defer rows.Close()
+	return pgx.CollectRows(rows, pgx.RowToStructByName[Thumbnail])
+}
+
 func assert(e error) {
 	if e != nil {
-		log.Panic(e)
+		log.Fatal(e)
 	}
-}
-
-type User struct {
-	Name    string
-	Session string
-}
-
-type Site struct {
-	Title    string
-	Summary  string
-	Content  string
-	Link     string
-	Session  string
-	Display  string
-	Thumbs   []Thumbnail
-	Comments []Comment
 }
 
 type Thumbnail struct {
@@ -38,16 +239,6 @@ type Thumbnail struct {
 	Title   string    `db:"title"`
 	Summary string    `db:"summary"`
 	Date    time.Time `db:"date"`
-}
-
-func getThumbnails(pool *pgxpool.Pool) ([]Thumbnail, error) {
-	query := `SELECT link, title, summary, updated_at AS date FROM posts`
-	rows, err := pool.Query(context.Background(), query)
-	defer rows.Close()
-	if err != nil {
-		return []Thumbnail{}, err
-	}
-	return pgx.CollectRows(rows, pgx.RowToStructByName[Thumbnail])
 }
 
 type Post struct {
@@ -59,7 +250,7 @@ type Post struct {
 	Content   string    `db:"content"`
 	UpdatedAt time.Time `db:"updated_at"`
 	Comments  []Comment `db:"-"`
-	Display   string    `db:"-"`
+	Profile   string    `db:"-"`
 }
 
 func getPostContent(pool *pgxpool.Pool, link string) (Post, error) {
@@ -91,10 +282,15 @@ JOIN users u ON c.user_id = u.id
 WHERE c.post_id = $1
 ORDER BY c.created_at ASC`
 	rows, err := pool.Query(context.Background(), query, postID)
-	assert(err)
+	if err != nil {
+		log.Printf("err:%v", err)
+	}
 	defer rows.Close()
 	comments, err := pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
-	assert(err)
+	if err != nil {
+		log.Printf("err:%v")
+		return []Comment{}
+	}
 	return comments
 }
 
@@ -113,20 +309,6 @@ c.user_id = u.id`
 	return pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 }
 
-func validLogin(username, password string) bool {
-	users := map[string]string{
-		"asdf":       "asdf",
-		"jane_smith": "asdf",
-		"john_doe":   "asdf",
-	}
-	if val, ok := users[username]; ok {
-		if password == val {
-			return true
-		}
-	}
-	return false
-}
-
 type Templates map[string]*template.Template
 
 func parseTemplates(prefix string) Templates {
@@ -138,7 +320,13 @@ func parseTemplates(prefix string) Templates {
 	if err != nil {
 		log.Fatal("error parsing ", prefix+"rss.xml")
 	}
-	html := []string{"index", "post", "404"}
+	t["profile"] = template.Must(template.ParseFiles(prefix + "profile.html"))
+	html := []string{
+		"404",
+		"index",
+		"post",
+		"posts",
+	}
 	for _, h := range html {
 		name := prefix + h + ".html"
 		t[h], err = template.Must(base.Clone()).ParseFiles(name)
@@ -147,133 +335,4 @@ func parseTemplates(prefix string) Templates {
 		}
 	}
 	return t
-}
-
-func main() {
-	pool, err := pgxpool.New(context.Background(), "postgres://postgres@localhost:5432/mysite")
-	assert(err)
-	defer pool.Close()
-
-	ts := parseTemplates("views/")
-	var user User
-
-	fileServer := http.FileServer(http.Dir("./static"))         // "/static" (on local fs)
-	http.Handle("GET /s/", http.StripPrefix("/s/", fileServer)) // "/s" (in html templates)
-
-	http.HandleFunc("POST /posts/{link}/comment", func(w http.ResponseWriter, r *http.Request) {
-		data, err := getPostContent(pool, r.PathValue("link"))
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		comments, err := postComment(pool, data.ID, 1, r.PostFormValue("comment"))
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		if val, ok := ts["post"]; ok {
-			assert(val.ExecuteTemplate(w, "oob-comment", comments[0])) // update the comments
-			assert(val.ExecuteTemplate(w, "form", data))               // replace form with an empty one
-		}
-	})
-
-	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
-		user.Session = ""
-		w.Write([]byte(`
-<a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
-	})
-
-	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<div id="login-container" style="display:none;"></div>`))
-	})
-
-	http.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
-		assert(ts["base"].ExecuteTemplate(w, "login-container", nil))
-	})
-
-	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
-		// login either succeeds or fails
-		// if success: - close modal and update .Session
-		// else: display fail message then back to login form
-		err := r.ParseForm()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-		username := r.PostFormValue("username")
-		password := r.PostFormValue("password")
-		if validLogin(username, password) {
-			sessionToken := "some-random-thing-for:" + username
-			http.SetCookie(w, &http.Cookie{
-				Name:     "session_token",
-				Value:    sessionToken,
-				HttpOnly: true,
-				Secure:   true,
-				MaxAge:   3600,
-			})
-			user.Name = username
-			user.Session = "1234"
-			log.Printf("login success [user: %s]", username)
-			// w.Write([]byte(`<div id="login-container" hx-swap="outerHTML" style="display:none;"></div>`))
-			ts["base"].ExecuteTemplate(w, "login-container", struct{ Display string }{"none"})
-			ts["base"].ExecuteTemplate(w, "login-logout", user)
-		} else {
-			log.Print("[login failure], user: ", username)
-			ts["base"].ExecuteTemplate(w, "login-container", struct{ Display string }{"none"})
-			// w.Write([]byte(`<p>invalid login</p>`))
-			// TODO:
-			// w.Write([]byte(`<div id="login-container" style="display:none;"></div>`))
-		}
-	})
-
-	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
-		data, err := getPostContent(pool, r.PathValue("post"))
-		if err != nil {
-			assert(ts["404"].ExecuteTemplate(w, "404", nil))
-			log.Print(err)
-			return
-		}
-		merged := struct {
-			Post
-			User
-		}{data, user}
-		comments := getComments(pool, data.ID)
-		merged.Comments = comments
-		merged.Display = "none"
-		if val, ok := ts["post"]; ok {
-			err := val.ExecuteTemplate(w, "post", merged)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		} else {
-			log.Print("no key `post` in ts")
-		}
-	})
-
-	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		site := Site{
-			Title:   "Alex Shroyer",
-			Summary: "research and hobbies of a computer engineer",
-			Display: "none",
-			Session: user.Session, // TODO implement actual session handling in db
-		}
-
-		site.Thumbs, err = getThumbnails(pool)
-		if err != nil {
-			assert(ts["404"].ExecuteTemplate(w, "404", nil))
-			return
-		}
-		switch r.URL.String() {
-		case "/":
-			assert(ts["index"].ExecuteTemplate(w, "index", site))
-		case "/rss.xml":
-			w.Header().Set("Content-Type", "application/xml")
-			assert(ts["rss"].ExecuteTemplate(w, "rss", site))
-		default:
-			w.WriteHeader(http.StatusNotFound)
-			site.Title = "not found"
-			assert(ts["404"].ExecuteTemplate(w, "404", site))
-		}
-	})
-
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

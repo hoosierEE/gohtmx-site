@@ -8,11 +8,10 @@
     <meta name="htmx-config"
           content='{"responseHandling":[
                    {"code":"204", "swap": false},
-                   {"code":"[23]..", "swap": true},
+                   {"code":"401", "swap": true, "error":true},
                    {"code":"422", "swap": true},
                    {"code":"[45]..", "swap": false, "error":true},
-                   {"code":"...", "swap": true}
-                   ]}'>
+                   {"code":"...", "swap": true}]}'>
     <link rel="stylesheet" href="/s/css/main.css">
     <link rel="icon" href="/s/images/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@2.0.2"
@@ -22,7 +21,7 @@
   </head>
   <body>
 
-    {{template "login-container" .}}
+    <div id="login-target"></div>
 
     <header>
       <nav>
@@ -31,7 +30,11 @@
         <a href="/papers">Papers</a>
         <a href="/projects">Projects</a>
         <a href="/rss.xml">RSS</a>
-        {{template "login-logout" .}}
+        <a href="/profile"
+           hx-get="/profile"
+           hx-target="#login-target">
+          <span id="nav-name" hx-swap-oob="#nav-name">{{.Profile}}</span>{{template "person" .}}
+        </a>
       </nav>
     </header>
 
@@ -58,38 +61,16 @@
           htmx.trigger(document.body, 'escapePressed')
         }
       })
-      // document.addEventListener('DOMContentLoaded', ()=>{
-      //   document.querySelector('#login-container').style.display='none';
-      // })
     </script>
   </body>
 </html>
 {{end}}
 
-{{block "login-container" .}}
-<div id="login-container" style="display:{{.Display}}">
-  <div class="login-content">
-    <a href="#" class="close-button"
-       hx-trigger="escapePressed from:body, click"
-       hx-get="/login-cancel"
-       hx-target="#login-container"
-       hx-swap="outerHTML">×</a>
-    <h3>sign in</h3>
-    <form hx-post="/login" hx-target="#login-container" hx-swap="outerHTML">
-      <label for="name">Username:</label>
-      <input name="username" type="name" placeholder="username" required autofocus>
-      <label for="password">Password:</label>
-      <input name="password" type="password" placeholder="password" required>
-      <input type="submit" value="Login">
-    </form>
-  </div>
-</div>
-{{end}}
-
-{{block "login-logout" .}}
-{{if .Session}}
-<a id="sessionNav" href="/logout" hx-get="/logout" hx-swap-oob="true">Logout</a>
-{{else}}
-<a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>
-{{end}}
+{{define "person"}}
+<span class="person-icon">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="110" r="40" />
+    <circle cx="50" cy="40" r="25" />
+  </svg>
+</span>
 {{end}}

@@ -1,0 +1,24 @@
+{{block "profile" .}}
+<div id="login-container">
+  <div class="login-content">
+    <a href="#" class="close-button"
+       hx-trigger="escapePressed from:body, click"
+       hx-get="/login-cancel"
+       hx-target="#login-container"
+       hx-swap="outerHTML">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--fgcolor)" stroke-width="5" fill="none"/>
+      </svg>
+    </a>
+    <h3>sign in</h3>
+    <form hx-post="/login" hx-target="#login-target">
+      <label for="username">Username:</label>
+      <input name="username" type="name" placeholder="username" required autofocus value="{{.Username}}">
+      <label for="password">Password:</label>
+      <input name="password" type="password" placeholder="password" required>
+      <div class="error">{{.Error}}</div>
+      <input type="submit" value="Login">
+    </form>
+  </div>
+</div>
+{{end}}
