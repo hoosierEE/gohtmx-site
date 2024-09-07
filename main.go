@@ -87,17 +87,15 @@ func main() {
 		}
 	})
 
-	// http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
-	// 	w.Write([]byte(`
-	// <a id="sessionNav" href="/login" hx-get="/login" hx-target="#login-container" hx-swap="outerHTML">Login</a>`))
-	// })
-
 	http.HandleFunc("GET /profile", func(w http.ResponseWriter, r *http.Request) {
 		assert(ts["profile"].ExecuteTemplate(w, "profile", nil))
 	})
 
-	// returning nothing works!
 	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {})
+
+	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-trigger="click" hx-target="#login-target">Login</a>`))
+	})
 
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -106,8 +104,8 @@ func main() {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		if validLogin(username, password) {
-			w.Write([]byte(`<span id="nav-name" hx-swap-oob="#nav-name">` + username + `</span>`))
-			log.Print("correct!")
+			w.Write([]byte(`<div hx-swap-oob="true" id="login-target" hx-target="#login-target"></div>`))
+			w.Write([]byte(`<a hx-swap-oob="true" id="login-logout" href="#" hx-get="/logout" hx-target="#login-logout">Logout</a>`))
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 			data := struct {
@@ -115,11 +113,7 @@ func main() {
 				Error    string
 			}{username, "Incorrect username or password"}
 			assert(ts["profile"].ExecuteTemplate(w, "profile", data))
-			log.Print("wrong")
 		}
-
-		// TODO - handle error
-		// w.Write([]byte(`<div id="login-target" style="display:none;></div>"`))
 	})
 
 	http.HandleFunc("GET /posts/{post}", func(w http.ResponseWriter, r *http.Request) {
@@ -128,14 +122,6 @@ func main() {
 			assert(ts["404"].ExecuteTemplate(w, "404", nil))
 			log.Printf("getPostContent failed: %v", err)
 			return
-		}
-
-		// FIXME: copypasta
-		session, ok := getSession(r)
-		if ok {
-			data.Profile = "Hello " + session.username
-		} else {
-			data.Profile = "Login"
 		}
 
 		data.Comments = getComments(pool, data.ID)
@@ -154,16 +140,8 @@ func main() {
 			Title:   "Posts",
 			Summary: "all posts",
 			Content: "",
-			Profile: "Login",
+			Profile: "",
 			Thumbs:  []Thumbnail{},
-		}
-
-		// FIXME: copypasta
-		session, ok := getSession(r)
-		if ok {
-			site.Profile = "Hello " + session.username
-		} else {
-			site.Profile = "Login"
 		}
 
 		site.Thumbs, err = getThumbnails(pool, -1)
@@ -179,22 +157,15 @@ func main() {
 			Title:   "Alex Shroyer",
 			Summary: "research and hobbies of a computer engineer",
 			Content: "",
-			Profile: "Profile",
+			Profile: "",
 			Thumbs:  []Thumbnail{},
-		}
-
-		// FIXME: copypasta
-		session, ok := getSession(r)
-		if ok {
-			site.Profile = "Hello " + session.username
-		} else {
-			site.Profile = "Login"
 		}
 
 		if site.Thumbs, err = getThumbnails(pool, 2); err != nil {
 			log.Printf("[thumbnails] %v", err)
 			assert(ts["404"].ExecuteTemplate(w, "404", nil))
 		}
+
 		switch r.URL.String() {
 		case "/":
 			assert(ts["index"].ExecuteTemplate(w, "index", site))
@@ -313,7 +284,7 @@ type Templates map[string]*template.Template
 
 func parseTemplates(prefix string) Templates {
 	var err error
-	t := make(map[string]*template.Template)
+	t := Templates{} //make(map[string]*template.Template)
 	base := template.Must(template.ParseFiles(prefix + "base.html"))
 	t["base"] = base
 	t["rss"], err = template.Must(base.Clone()).ParseFiles(prefix + "rss.xml")

@@ -1,22 +1,26 @@
 {{block "profile" .}}
-<div id="login-container">
+<div id="login-container"
+     hx-target="#login-container"
+     hx-swap="outerHTML"
+     >
   <div class="login-content">
     <a href="#" class="close-button"
-       hx-trigger="escapePressed from:body, click"
+       hx-trigger="escapePressed from:body, click, click from:#login-container"
        hx-get="/login-cancel"
-       hx-target="#login-container"
        hx-swap="outerHTML">
       <svg width="100" height="100" viewBox="0 0 100 100">
         <path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--fgcolor)" stroke-width="5" fill="none"/>
       </svg>
     </a>
     <h3>sign in</h3>
-    <form hx-post="/login" hx-target="#login-target">
-      <label for="username">Username:</label>
-      <input name="username" type="name" placeholder="username" required autofocus value="{{.Username}}">
-      <label for="password">Password:</label>
-      <input name="password" type="password" placeholder="password" required>
-      <div class="error">{{.Error}}</div>
+    <form hx-post="/login">
+      <label for="login-username">Username:</label>
+      <input id="login-username" name="username" type="name" placeholder="username"
+             autocomplete="username" required autofocus value="{{.Username}}">
+      <label for="login-password">Password:</label>
+      <input id="login-password" name="password" type="password" placeholder="password"
+             autocomplete="current-password" required>
+      <div id="login-error-message" class="error">{{.Error}}</div>
       <input type="submit" value="Login">
     </form>
   </div>
