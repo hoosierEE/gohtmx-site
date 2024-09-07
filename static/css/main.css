@@ -22,17 +22,30 @@
 }
 
 #addComment{padding:1em 0;}
-#login-container{display:flex;position:fixed;width:100vw;height:100vh;background:#222a;backdrop-filter:blur(1px);}
+#login-container{
+    display:flex;
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    background:#222a;
+    opacity: 1;
+}
+@keyframes fadeOut {
+    from {opacity:1;}
+    to {opacity:0;display:none;}
+}
+.invisible{animation: fadeOut 0.5s ease-out forwards; animation-fill-mode:forwards;}
+
 .about-section{display:flex;align-items:center;gap:1em;}
-.card,.login-content{border-radius:3px;}
+.card, #login-content{border-radius:3px;}
 .cards a{text-decoration:none;}
 .cards{display:flex;gap:0.5em;}
 .card{flex:1;box-shadow:0 1px 2px 0 #0005;max-width:14em;padding:1em;}
 .comment:nth-child(odd){background:var(--accent1);}
 .comment{padding:5px 0;}
 .error{color:red}
-.login-content h3{text-align:center}
-.login-content{
+#login-content h3{text-align:center}
+#login-content{
     background:var(--bgcolor);
     height:15em;
     width:20em;
@@ -42,7 +55,7 @@
 }
 .login-form-container{max-width:10em;margin:2em auto;}
 .metadata,textarea::placeholder,input::placeholder{color:rgb(var(--fgrgb), 0.4);}
-.person-icon{vertical-align:text-top;}
+.person-icon{vertical-align:text-top}
 .person-icon svg{display:inline;height:1.2em;width:1.2em;fill:var(--white);border:1px solid var(--white);border-radius:50%;}
 .pfp{width:9em;height:8.5em;border-radius:50%;}
 .video-container{position:relative;width:100%;max-width:var(--maxwid);}
@@ -67,8 +80,8 @@ h1,h2,h3,h4{font-weight:99}
 header{background:rgb(var(--accent0));}
 main{margin:auto;padding:0 1em;max-width:var(--maxwid);}
 nav a,a.close-button{text-decoration:none;}
-nav a,footer,footer a{color:var(--white);}
+nav a,footer *{color:var(--white);}
 nav a:hover{text-decoration:underline;}
-nav{margin:auto;padding:1em;max-width:var(--maxwid);display:flex; justify-content:space-between;}
+nav{margin:auto;padding:1em;gap:1em;max-width:var(--maxwid);display:flex;flex-wrap:wrap;justify-content:space-between;}
 svg{fill:var(--fgcolor);}
 textarea,input,.close-button{background:var(--accent1);color:var(--fgcolor);}

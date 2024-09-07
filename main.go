@@ -91,7 +91,9 @@ func main() {
 		assert(ts["profile"].ExecuteTemplate(w, "profile", nil))
 	})
 
-	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {})
+	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
+	})
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-trigger="click" hx-target="#login-target">Login</a>`))
@@ -104,7 +106,7 @@ func main() {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		if validLogin(username, password) {
-			w.Write([]byte(`<div hx-swap-oob="true" id="login-target" hx-target="#login-target"></div>`))
+			w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
 			w.Write([]byte(`<a hx-swap-oob="true" id="login-logout" href="#" hx-get="/logout" hx-target="#login-logout">Logout</a>`))
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
