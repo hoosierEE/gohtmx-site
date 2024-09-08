@@ -96,7 +96,7 @@ func main() {
 	})
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-trigger="click" hx-target="#login-target">Login</a>`))
+		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-target="#login-target">Login</a>`))
 	})
 
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +107,7 @@ func main() {
 		password := r.FormValue("password")
 		if validLogin(username, password) {
 			w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
-			w.Write([]byte(`<a hx-swap-oob="true" id="login-logout" href="#" hx-get="/logout" hx-target="#login-logout">Logout</a>`))
+			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout</a>`))
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 			data := struct {
