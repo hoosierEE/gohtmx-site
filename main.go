@@ -82,14 +82,19 @@ func main() {
 			return
 		}
 
+		comment := r.PostFormValue("comment")
+		if len(comment) < 1 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		if sess, ok := getSession(r); ok {
 			data.Profile = sess.username
 		}
 
-		// TODO: lookup userID by username
 		if _, ok := users[data.Profile]; ok {
 			log.Printf("data.Profile: %s", data.Profile)
-			comments, err := postComment(pool, data.ID, data.Profile, r.PostFormValue("comment"))
+			comments, err := postComment(pool, data.ID, data.Profile, comment)
 			if err != nil {
 				log.Print(err)
 				return
@@ -359,7 +364,6 @@ ORDER BY c.created_at ASC`
 	return comments
 }
 
-// TODO: username instead of userID
 func postComment(pool *pgxpool.Pool, postID int, userID string, content string) ([]Comment, error) {
 	query := `
 WITH rows AS

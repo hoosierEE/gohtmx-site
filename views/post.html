@@ -29,7 +29,9 @@
   </form>
 </div>
 {{else}}
-<div hx-swap-oob="true" id="addComment"></div>
+<div id="addComment" href="#" hx-swap-oob="true" hx-target="#login-target" hx-get="/profile">
+  <input type="submit" value="add comment"></input>
+</div>
 {{end}}
 {{end}}
 
