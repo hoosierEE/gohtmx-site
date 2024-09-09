@@ -76,7 +76,7 @@
 
 {{block "nav-profile" .}}
 {{if .Profile}}
-<a id="login-logout" href="#" hx-get="/logout" hx-target="#login-logout">Logout</a>
+<a id="login-logout" href="#" hx-get="/logout" hx-target="#login-logout">Logout {{.Profile}}</a>
 {{else}}
 <a id="login-logout" href="#" hx-get="/profile" hx-target="#login-target">Login</a>
 {{end}}

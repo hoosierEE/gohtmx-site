@@ -5,8 +5,11 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,42 +22,44 @@ type Site struct {
 	Thumbs  []Thumbnail
 }
 
+type session struct {
+	username string
+	expires  time.Time
+}
+
+// TODO: replace globals
+var sessions = map[string]session{}
+
+// TODO: replace globals
 var users = map[string]string{
 	"asdf":     "asdf",
 	"john_doe": "asdf",
 }
 
-var sessions = map[string]Session{}
-
-type Session struct {
-	username string
-	expires  time.Time
-}
-
-func (s *Session) isExpired() bool {
+func (s *session) isExpired() bool {
 	return s.expires.Before(time.Now())
 }
 
 func validLogin(username, password string) bool {
-	val, ok := users[username]
+	val, ok := users[username] // TODO: replace globals
 	return ok && val == password
 }
 
-func validSession(token string) (Session, bool) {
-	data, ok := sessions[token]
+func validSession(token string) (session, bool) {
+	data, ok := sessions[token] // TODO: replace globals
 	if ok && !data.isExpired() {
 		return data, ok
 	}
-	return Session{}, false
+	return session{}, false
 }
 
-func getSession(r *http.Request) (Session, bool) {
+func getSession(r *http.Request) (session, bool) {
 	cookie, err := r.Cookie("session_token")
 	if err == nil {
 		token := cookie.Value
 		return validSession(token)
 	}
-	return Session{}, false
+	return session{}, false
 }
 
 func main() {
@@ -76,18 +81,29 @@ func main() {
 			log.Print(err)
 			return
 		}
-		comments, err := postComment(pool, data.ID, 1, r.PostFormValue("comment"))
-		if err != nil {
-			log.Print(err)
-			return
+
+		if sess, ok := getSession(r); ok {
+			data.Profile = sess.username
 		}
-		if val, ok := ts["post"]; ok {
-			assert(val.ExecuteTemplate(w, "oob-comment", comments[0])) // update the comments
-			assert(val.ExecuteTemplate(w, "form", data))               // replace form with an empty one
+
+		// TODO: lookup userID by username
+		if _, ok := users[data.Profile]; ok {
+			log.Printf("data.Profile: %s", data.Profile)
+			comments, err := postComment(pool, data.ID, data.Profile, r.PostFormValue("comment"))
+			if err != nil {
+				log.Print(err)
+				return
+			}
+			assert(ts["post"].ExecuteTemplate(w, "oob-comment", comments[0])) // update the comments
+			assert(ts["post"].ExecuteTemplate(w, "form", data))               // replace form with an empty one
 		}
 	})
 
 	http.HandleFunc("GET /profile", func(w http.ResponseWriter, r *http.Request) {
+		_, ok := getSession(r)
+		if ok {
+			return
+		}
 		assert(ts["profile"].ExecuteTemplate(w, "profile", nil))
 	})
 
@@ -96,6 +112,40 @@ func main() {
 	})
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
+		c, err := r.Cookie("session_token")
+		if err != nil {
+			if err == http.ErrNoCookie {
+				w.WriteHeader(http.StatusUnauthorized)
+				goto cleanup
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			goto cleanup
+		}
+		delete(sessions, c.Value)
+
+	cleanup:
+		// TODO: could this be better handled somewhere else?
+		// if we're on a post page, there's an add-comment box that should appear after login succeeds
+		parsedURL, err := url.Parse(r.Referer())
+		if err != nil {
+			log.Print("error parsing URL from r.Referer(): ", r.Referer())
+			log.Print(err)
+		} else {
+			pathParts := strings.Split(parsedURL.Path, "/")
+			log.Printf("pathParts:(%s)", pathParts[1])
+			if len(pathParts) > 2 && pathParts[1] == "posts" {
+				ts["post"].ExecuteTemplate(w, "form", struct {
+					Profile string
+					Link    string
+				}{"", pathParts[2]})
+			}
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:    "session_token",
+			Value:   "",
+			Expires: time.Now(),
+		})
 		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-target="#login-target">Login</a>`))
 	})
 
@@ -106,8 +156,37 @@ func main() {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		if validLogin(username, password) {
+			sessionToken := uuid.NewString()
+			expiresAt := time.Now().Add(120 * time.Second)
+			sessions[sessionToken] = session{
+				username: username,
+				expires:  expiresAt,
+			}
+			http.SetCookie(w, &http.Cookie{
+				Name:    "session_token",
+				Value:   sessionToken,
+				Expires: expiresAt,
+			})
 			w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
-			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout</a>`))
+			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout ` + username + `</a>`))
+
+			// TODO: could this be better handled somewhere else?
+			// if we're on a post page, there's an add-comment box that should appear after login succeeds
+			parsedURL, err := url.Parse(r.Referer())
+			if err != nil {
+				log.Print("error parsing URL from r.Referer(): ", r.Referer())
+				log.Print(err)
+			} else {
+				pathParts := strings.Split(parsedURL.Path, "/")
+				log.Printf("pathParts:(%s)", pathParts[1])
+				if len(pathParts) > 2 && pathParts[1] == "posts" {
+					ts["post"].ExecuteTemplate(w, "form", struct {
+						Profile string
+						Link    string
+					}{username, pathParts[2]})
+				}
+			}
+
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 			data := struct {
@@ -124,6 +203,11 @@ func main() {
 			assert(ts["404"].ExecuteTemplate(w, "404", nil))
 			log.Printf("getPostContent failed: %v", err)
 			return
+		}
+
+		// TODO: better handled elsewhere?
+		if sess, ok := getSession(r); ok {
+			data.Profile = sess.username
 		}
 
 		data.Comments = getComments(pool, data.ID)
@@ -146,6 +230,10 @@ func main() {
 			Thumbs:  []Thumbnail{},
 		}
 
+		if sess, ok := getSession(r); ok {
+			site.Profile = sess.username
+		}
+
 		site.Thumbs, err = getThumbnails(pool, -1)
 		if err != nil {
 			log.Printf("[thumbnails] %v", err)
@@ -161,6 +249,10 @@ func main() {
 			Content: "",
 			Profile: "",
 			Thumbs:  []Thumbnail{},
+		}
+
+		if sess, ok := getSession(r); ok {
+			site.Profile = sess.username
 		}
 
 		if site.Thumbs, err = getThumbnails(pool, 2); err != nil {
@@ -261,16 +353,18 @@ ORDER BY c.created_at ASC`
 	defer rows.Close()
 	comments, err := pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 	if err != nil {
-		log.Printf("err:%v")
+		log.Printf("err:%v", err)
 		return []Comment{}
 	}
 	return comments
 }
 
-func postComment(pool *pgxpool.Pool, postID, userID int, content string) ([]Comment, error) {
+// TODO: username instead of userID
+func postComment(pool *pgxpool.Pool, postID int, userID string, content string) ([]Comment, error) {
 	query := `
 WITH rows AS
-(INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING *)
+(INSERT INTO comments (post_id, user_id, content) VALUES
+ ($1, (SELECT id FROM users WHERE username = $2), $3) RETURNING *)
 SELECT u.username, time_format(c.created_at) AS when, c.content
 FROM rows c JOIN users u ON
 c.user_id = u.id`

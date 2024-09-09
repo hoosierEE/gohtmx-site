@@ -17,16 +17,20 @@
 
 {{block "comments" .}}
 <div id="comments">{{range .Comments}}{{template "comment" .}}{{end}}</div>
-<div id="addComment">
-  {{template "form" .}}
-</div>
+{{template "form" .}}
 {{end}}
 
 {{block "form" .}}
-<form hx-post="/posts/{{.Link}}/comment" hx-swap="outerHTML">
-  <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..."></textarea>
-  <input type="submit" value="add comment">
-</form>
+{{if .Profile}}
+<div hx-swap-oob="true" id="addComment">
+  <form hx-post="/posts/{{.Link}}/comment" hx-swap="outerHTML">
+    <textarea name="comment" rows="8" wrap="virtual" placeholder="write a comment..."></textarea>
+    <input type="submit" value="add comment">
+  </form>
+</div>
+{{else}}
+<div hx-swap-oob="true" id="addComment"></div>
+{{end}}
 {{end}}
 
 {{block "comment" .}}

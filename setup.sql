@@ -35,7 +35,8 @@ FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE -- delete post's co
 INSERT INTO users (username, email, password_hash) VALUES
 ('john_doe', 'john@example.com', 'hashed_password_1'),
 ('jane_smith', 'jane@example.com', 'hashed_password_2'),
-('bob_johnson', 'bob@example.com', 'hashed_password_3');
+('bob_johnson', 'bob@example.com', 'hashed_password_3'),
+('asdf', 'asdf@example.com', 'hashed_password_4');
 
 INSERT INTO posts (author_id, link, title, summary, content) VALUES
 (1, 'first-post', 'first post', 'some content', 'this is some content'),
