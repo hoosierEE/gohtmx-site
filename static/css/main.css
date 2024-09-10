@@ -1,11 +1,12 @@
 #addComment{padding:1em 0}
-#login-container{display:flex;position:fixed;width:100vw;height:100vh;background:#222a;opacity:1}
+#login-container{display:flex;position:fixed;width:100vw;height:100vh;background:#222a;opacity:1;z-index:9998}
 #login-content h3{text-align:center}
 #login-content{background:var(--bg);height:15em;width:20em;margin:auto;padding:3em;box-shadow:0 5px 5px 0 #0005}
+#login-target{z-index:9999}
 .about-section{display:flex;align-items:center;gap:1em}
 .card,#login-content{border-radius:3px}
 .cards a{text-decoration:none}
-.cards{display:flex;gap:0.5em}
+.cards{display:flex;flex-wrap:wrap;gap:1em}
 .card{flex:1;box-shadow:0 1px 2px 0 #0005;max-width:14em;padding:1em}
 .close-button svg{height:1.3em;stroke:var(--fg)}
 .close-button{box-shadow:0 0 1px var(--fg);border:1px solid var(--fg);display:flex;width:1.3em;height:1.3em;align-items:center}
@@ -30,7 +31,7 @@ body{background:var(--bg);color:var(--fg);font-family:system-ui;font-weight:200;
 footer svg,.person-icon svg{fill:var(--cw)}
 footer{background-color:var(--a2);font-size:smaller;padding:2em;text-align:center;z-index:-1}
 form textarea{width:100%;box-sizing:border-box}
-form{display:flex;gap:0.25em;flex-direction:column;align-items:flex-start}
+form{display:flex;gap:0.5em;flex-direction:column;align-items:flex-start}
 h1,h2,h3,h4{font-weight:300}
 header{background:rgb(var(--a0))}
 input[type=submit]:hover,.close-button:hover{background:color(from var(--a1) srgb 0 0 0 / 0.2)}
