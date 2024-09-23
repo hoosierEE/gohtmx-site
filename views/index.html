@@ -7,34 +7,28 @@
 {{define "title"}}Home{{end}}
 
 {{block "content" .}}
+<h1>Alex Shroyer</h1>
+
 <h2>News</h2>
-<div>
-  <dl class="org-dl">
-    <dt>2024-07-03</dt><dd><a href="https://github.com/andrew">Andrew</a> <a href="https://github.com/andrew/nesbitt.io/commit/17cd6fa72cd94af3d753708b4a8bccc6a660ab73">merged</a> <a href="https://alexshroyer.com/posts/2024-07-01-FloatVer.html">FloatVer</a> into his <a href="https://nesbitt.io/2024/06/24/from-zerover-to-semver-a-comprehensive-list-of-versioning-schemes-in-open-source.html#floatver">list of versioning schemes</a></dd>
-    <dt>2024-03-06</dt><dd>Tensorflow merged my <a href="https://github.com/tensorflow/text/pull/1229">contribution</a></dd>
-    <dt>2024-02-09</dt><dd>Started a new <a href="https://github.com/hoosierEE/element">project</a> (writing an interpreter for a K-like language)</dd>
-    <dt>2023-12-15</dt><dd>PhD complete! 🎉</dd>
-    <dt>2023-11-26</dt><dd>PyTorch merged my <a href="https://github.com/pytorch/examples/pull/1198">contribution</a></dd>
-    <dt>2023-10-23</dt><dd>Add RSS feed by request (Hi Joseph!)</dd>
-    <dt>2023-09-08</dt><dd>Won Best Presentation award at <a href="https://saiconference.com/Conferences/IntelliSys2023">IntelliSys2023</a></dd>
-    <dt>2023-07-08</dt><dd>Talked about array languages with Richard Feldman on the <a href="https://podcasts.apple.com/us/podcast/thinking-in-array-languages-with-alex-shroyer/id1602572955?i=1000619306747">Software Unscripted</a> podcast</dd>
-  </dl>
-</div>
+<ol class="news">
+  <li><span class="date">2024-07-03</span><a href="https://github.com/andrew">Andrew</a> <a href="https://github.com/andrew/nesbitt.io/commit/17cd6fa72cd94af3d753708b4a8bccc6a660ab73">merged</a> <a href="https://alexshroyer.com/posts/2024-07-01-FloatVer.html">FloatVer</a> into his <a href="https://nesbitt.io/2024/06/24/from-zerover-to-semver-a-comprehensive-list-of-versioning-schemes-in-open-source.html#floatver">list of versioning schemes</a></li>
+  <li><span class="date">2024-03-06</span>Tensorflow merged my <a href="https://github.com/tensorflow/text/pull/1229">contribution</a></li>
+  <li><span class="date">2024-02-09</span>Started a new <a href="https://github.com/hoosierEE/element">project</a> (writing an interpreter for a K-like language)</li>
+  <li><span class="date">2023-11-26</span>PyTorch merged my <a href="https://github.com/pytorch/examples/pull/1198">contribution</a></li>
+</ol>
+
 <h2>Research</h2>
-<p>
-  Trustworthy computing requires finding code vulnerabilities fast.
-  Unfortunately, vulnerabilities are sometimes hard to find, so we need tools that can spot potential problems even without formal definitions.
-  I use deep learning to more quickly classify potentially vulnerable code, allowing security analysts to focus their effort on high-impact spots.
-</p>
+<p>Trustworthy computing requires finding code vulnerabilities, and fast.</p>
+<p>We need tools that can spot potential problems in a rapidly-shifting security landscape. I build these kinds of tools, using deep learning to highlight possiblly vulnerable code, so security analysts can focus their attention on what matters.</p>
 
-
-<h2 class="recent">Recent</h2>
+<h2 class="recent">Recent Posts</h2>
 <div class="cards">
   {{range .Thumbs}}
-  <a href="/posts/{{.Link}}">
+  <a href="/posts/{{.Link}}" aria-label="{{.Title}}">
     <div class="card">
       <h3 class="title">{{.Title}}</h3>
       <div class="body">{{.Summary}}</div>
+      <div class="date">{{.Date}}</div>
     </div>
   </a>
   {{end}}
@@ -44,19 +38,9 @@
 <div class="about-section">
   <image alt="photo of me looking to the right" class="pfp" src="/s/images/pfp.jpeg">
     <div>
-      <p>
-        Some of my favorite things to do include hiking with my family, cycling in nature, woodworking with hand tools, going on road trips, and solving puzzles.
-      </p>
-
-      <p>
-        I appreciate good design in software and the real world.
-        As a systems engineer at Indiana University I build tools for embedded systems security, manage SaaS installations, and maintain high performance clusters.
-        I enjoy learning new programming languages and reading obscure mechanical patents.
-      </p>
-
-      <p>
-        Email: contact@&lt;this page's url&gt;.
-      </p>
+      <p>Some of my favorite things to do include hiking with my family, cycling in nature, woodworking with hand tools, going on road trips, and solving puzzles.</p>
+      <p>I appreciate good design in software and the real world. As a systems engineer at Indiana University I build tools for embedded systems security, manage SaaS installations, and maintain high performance clusters. I enjoy learning new programming languages and reading obscure mechanical patents.</p>
+      <p>Email: contact@&lt;this page's url&gt;.</p>
     </div>
 </div>
 {{end}}

@@ -14,7 +14,7 @@ link VARCHAR(75) UNIQUE NOT NULL,
 title VARCHAR(255) UNIQUE NOT NULL,
 author_id INTEGER NOT NULL,
 summary TEXT NOT NULL, -- metadata for link previews or "abstract/tl;dr" sections
-content TEXT NOT NULL,
+content TEXT, -- maybe null? could be a draft, or served from the filesystem..?
 created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (author_id) REFERENCES users(id) -- post remains after author_id deleted
@@ -33,23 +33,24 @@ FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE -- delete post's co
 
 -- dummy values
 INSERT INTO users (username, email, password_hash) VALUES
-('john_doe', 'john@example.com', 'hashed_password_1'),
-('jane_smith', 'jane@example.com', 'hashed_password_2'),
-('bob_johnson', 'bob@example.com', 'hashed_password_3'),
-('asdf', 'asdf@example.com', 'hashed_password_4');
+('alex_shroyer', 'contact@alexshroyer.com', 'hashed_password'),
+-- ('john_doe', 'john@example.com', 'hashed_password_1'),
+-- ('jane_smith', 'jane@example.com', 'hashed_password_2'),
+-- ('bob_johnson', 'bob@example.com', 'hashed_password_3'),
+('asdf', 'asdf@example.com', '$argon2id$v=19$m=65536,t=1,p=8$B2fUdx6ah7LERGAwXD0ZVQ$cQ2GO2RkxkN5wZiWWdFJl97MbbDoRA89IcYlaAXsbrc');
 
-INSERT INTO posts (author_id, link, title, summary, content) VALUES
-(1, 'first-post', 'first post', 'some content', 'this is some content'),
-(1, 'second-post', 'hello world', 'heyo', 'hello everyone! this is my post'),
-(2, 'third-post', 'postgresql tips', 'article', 'some tips about postgresql');
+-- INSERT INTO posts (author_id, created_at, link, title, summary, content) VALUES
+-- (1, '2024-03-10 04:30:00', 'first-post', 'first post', 'some content', 'this is some content'),
+-- (1, '2024-07-12 10:31:00', 'second-post', 'hello world', 'heyo', 'hello everyone! this is my post'),
+-- (2, '2024-08-21 14:32:00', 'third-post', 'postgresql tips', 'article', 'some tips about postgresql');
 
-INSERT INTO comments (post_id, user_id, created_at, content) VALUES
-(1, 2, '2024-08-22 14:30:00', 'Great first post!'),
-(1, 3, '2024-08-22 14:31:00', 'Looking forward to more content.'),
-(2, 1, '2024-08-22 14:32:00', 'Welcome to the blogging world!'),
-(2, 3, '2024-08-22 14:33:00', 'Nice start, Jane!'),
-(3, 1, '2024-08-22 14:34:00', 'These tips are really helpful.'),
-(3, 2, '2024-08-22 14:35:00', 'Thanks for sharing, Bob!');
+-- INSERT INTO comments (post_id, user_id, created_at, content) VALUES
+-- (1, 2, '2024-08-10 14:30:00', 'Great first post!'),
+-- (1, 3, '2024-08-12 14:31:00', 'Looking forward to more content.'),
+-- (2, 1, '2024-08-21 14:32:00', 'Welcome to the blogging world!'),
+-- (2, 3, '2024-08-22 14:33:00', 'Nice start, Jane!'),
+-- (3, 1, '2024-08-23 14:34:00', 'These tips are really helpful.'),
+-- (3, 2, '2024-08-28 14:35:00', 'Thanks for sharing, Bob!');
 
 
 -- TODO: this might be handled better by always returning UTC to client,

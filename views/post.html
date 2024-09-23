@@ -9,13 +9,15 @@
 {{define "content"}}
 <article>
   <h1>{{.Title}}</h1>
-  <blockquote>{{.Summary}}</blockquote>
+  <div class="date-author">{{.Date}}</div>
   {{.Content}}
   {{template "comments" .}}
 </article>
 {{end}}
 
 {{block "comments" .}}
+<hr>
+<h3>comments</h3>
 <div id="comments">{{range .Comments}}{{template "comment" .}}{{end}}</div>
 {{template "form" .}}
 {{end}}

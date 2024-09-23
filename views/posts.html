@@ -7,13 +7,19 @@
 {{define "title"}}Posts{{end}}
 
 {{block "content" .}}
-<h2>All Posts</h2>
+<h1>All Posts</h1>
 <div class="cards">
   {{range .Thumbs}}
-  <a href="/posts/{{.Link}}">
+  <a href="/posts/{{.Link}}" aria-label="{{.Title}}">
     <div class="card">
       <h3 class="title">{{.Title}}</h3>
-      <div class="body">{{.Summary}}</div>
+      <div class="body">
+        {{if lt 100 ( len .Summary )}}
+        {{printf "%.100s" .Summary -}}...
+        {{else}}{{.Summary}}
+        {{end}}
+      </div>
+      <div class="date">{{.Date}}</div>
     </div>
   </a>
   {{end}}

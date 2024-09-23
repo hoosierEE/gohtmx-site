@@ -36,3 +36,22 @@ Database (PostgreSQL):
 This basic set of functionality comes from ~50 lines of Go, ~35 of HTML (with Go templates) and some CSS.
 
 I'm using [[https://github.com/air-verse/air][air]] to rebuild whenever the dependencies change; it's one less thing to remember (still have to refresh the browser to test some things).
+* [0/4] TODO:
+- [ ] proper sessions
+  - [ ] add user to db
+  - [ ] (idea) invitation tree like lobste.rs does?
+  - [ ] hash pw properly before storing in db
+  - [ ] store password hash in db
+  - [ ] update user in db
+  - [ ] delete user
+- [ ] email
+  - [ ] account creation
+  - [ ] account recovery (forgot password)
+- [ ] improve comments
+  - [ ] anti-spam
+  - [ ] approval/moderation?
+- [ ] hosting
+  - [ ] set up homelab
+  - [ ] static IP or workaround?
+  - [ ] make public
+  - [ ] put it in a reproducible container?
