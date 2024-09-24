@@ -7,12 +7,12 @@
 .abstract{font-style:italic;font-size:large;max-width:70%;margin:auto}
 .card .date{font-size:x-small}
 .card h3{margin:0 0 .5em}
-.card,.close-button,#login-content{border-radius:3px}
-.cards a{text-decoration:none}
 .card h3{text-decoration:underline}
+.card,.close-button,#login-content{border-radius:3px}
+.card:hover{box-shadow:0 1px 3px 0 #0005;}
+.cards a{text-decoration:none}
 .cards{margin:1em auto;display:grid;align-items:center;grid-template-columns: 1fr 1fr;gap:.8em;place-items:stretch}
 .card{box-shadow:0 0px 1px 0 #000a;padding:.5em;height:calc(100% - 1em)}
-.card:hover{box-shadow:0 1px 3px 0 #0005;}
 .close-button svg{height:2em;width:2em;stroke:var(--fg)}
 .close-button{box-shadow:0 0 1px var(--fg);border:1px solid var(--fg);display:flex;width:1.3em;height:1.3em;align-items:center}
 .comment:nth-child(odd){background:var(--a1)}
@@ -36,8 +36,8 @@
 @keyframes fadeOut{0%{opacity:1}to{opacity:0;display:none}}
 @media screen and (max-width:600px){.cards{grid-template-columns:1fr}}
 @media(prefers-color-scheme:dark){:root{--fg:#fff7ea;--fr:255,247,234;--bg:#448;--a0:0,97,153;--a1:#66a;--a2:#024} img[src$=".svg"]{filter:invert(.8)}}
-article .outline-2 h2,main h2{margin:2em 0 0 -20px}
 a,body{color:var(--fg)}
+article .outline-2 h2,main h2{margin:2em 0 0 -20px}
 body>footer{position:sticky;top:100vh}
 body{background:var(--bg);font-family:system-ui;font-weight:200;height:100%;margin:0;min-height:100vh}
 footer svg,.person-icon svg{fill:var(--cw)}
@@ -47,10 +47,11 @@ form{display:flex;gap:.5em;flex-direction:column;align-items:flex-start}
 h1{font-size:4em;font-family:Impact;font-style:italic;margin-bottom:0}
 h2,h3,h4{font-weight:300;font-family:Georgia}
 header{background:rgb(var(--a0))}
-hr{border:none;height:1px;background:linear-gradient(to right,var(--bg),var(--fg),var(--bg))}
+hr{height:1px;margin:2em auto;border:0;background:linear-gradient(to right,transparent,var(--fg)46%,var(--bg)46%,var(--bg)48%,var(--fg)48%,var(--fg)52%,var(--bg)52%,var(--bg)54%,var(--fg)54%,transparent 100%)}
 img{max-width:var(--mw)}
 input[type=submit]:hover,.close-button:hover{background:color(from var(--a1) srgb 0 0 0/.2)}
 input[type=submit]{cursor:pointer}
+li{padding:.2em 0}
 main{margin:auto;padding:2em;max-width:var(--mw)}
 nav a,footer *{color:var(--cw)}
 nav a:hover{text-decoration:underline}
@@ -61,4 +62,3 @@ table{border-spacing:.5em;width:100%}
 td{padding:.25em;background:var(--a1)}
 textarea,input,.close-button{background:var(--a1);color:var(--fg)}
 tr{overflow:scroll}
-li{padding:.2em 0}

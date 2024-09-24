@@ -146,20 +146,18 @@ func main() {
 
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			log.Print(err)
+			log.Print("r.ParseForm():", err)
 			return
 		}
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		user, err := users.Get(pool, username)
 		if err != nil {
-			log.Print("users.Get() error:", err)
-			return
+			log.Print("users.Get(\"", username, "\") error:", err)
 		}
 		match, err := users.ComparePW(password, user.Pass)
 		if err != nil {
 			log.Print("users.ComparePW() fail:", err)
-			return
 		}
 		if match {
 			sessionToken := uuid.NewString()
@@ -191,7 +189,7 @@ func main() {
 				}{username, pathParts[2]})
 			}
 		} else {
-			log.Print("unauthorized")
+			log.Print("unauthorized user login attempt:", username)
 			w.WriteHeader(http.StatusUnauthorized)
 			data := struct {
 				Username string
