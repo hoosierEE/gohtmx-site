@@ -1,0 +1,22 @@
+{{define "papers"}}
+{{template "base" .}}
+{{end}}
+
+{{define "summary"}}{{.Summary}}{{end}}
+
+{{define "title"}}{{.Title}}{{end}}
+
+{{block "content" .}}
+<h1>{{.Title}}</h1>
+<div class="cards">
+  {{range .Thumbs}}
+  <a href="/s/papers/{{.Link}}" aria-label="{{.Title}}">
+    <div class="card">
+      <h3 class="title">{{.Title}}</h3>
+      <div class="body">{{.Summary}}</div>
+      <div class="date">{{.Date}}</div>
+    </div>
+  </a>
+  {{end}}
+</div>
+{{end}}

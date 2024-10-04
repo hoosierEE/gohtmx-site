@@ -1,0 +1,8 @@
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <g fill="transparent" stroke="#d04010c5" stroke-width="3" font-size="10em">
+    <circle cx="55%" cy="50%" r="90" stroke="#a030a095" fill="#2088ff55" />
+    <circle cx="39%" cy="50%" r="70" fill="#fff0e0a0" />
+    <text x="35%" y="65%" stroke="#000" >a</text>
+    <text x="60%" y="55%" stroke="#000">s</text>
+  </g>
+</svg>

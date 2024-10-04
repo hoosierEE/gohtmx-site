@@ -58,27 +58,42 @@ INSERT INTO users (username, email, password_hash) VALUES
 -- implemented (yet): https://docs.timetime.in/blog/js-dates-finally-fixed/
 -- It still might be better to use a polyfill in the meantime.
 CREATE OR REPLACE FUNCTION time_format(timestamp_value TIMESTAMPTZ) RETURNS text AS $$
+
 DECLARE
 diff interval;
 ago text;
+t integer;
+
 BEGIN
 diff := now() - timestamp_value;
+t := 0;
 
 IF diff < '1 minute'::interval THEN
 ago := 'just now';
 ELSIF diff < '1 hour'::interval THEN
-ago := (extract(epoch from diff) / 60)::integer || ' minutes ago';
+t := (extract(epoch from diff) / 60)::integer;
+ago :=  ' minute';
 ELSIF diff < '1 day'::interval THEN
-ago := (extract(epoch from diff) / 3600)::integer || ' hours ago';
+t := (extract(epoch from diff) / 3600)::integer;
+ago := ' hour';
 ELSIF diff < '30 days'::interval THEN
-ago := (extract(epoch from diff) / 86400)::integer || ' days ago';
+t := (extract(epoch from diff) / 86400)::integer;
+ago := ' days ago';
 ELSIF diff < '1 year'::interval THEN
-ago := (extract(epoch from diff) / 2592000)::integer || ' months ago';
+t := (extract(epoch from diff) / 2592000)::integer;
+ago := ' month';
 ELSE
 ago := TO_CHAR(timestamp_value, 'YYYY-MM-DD');
 END IF;
 
-RETURN ago;
+IF t = 0 THEN
+return ago;
+ELSIF t = 1 THEN
+RETURN t || ago || ' ago';
+ELSE
+RETURN t || ago || 's ago';
+END IF;
+
 END;
 $$
 LANGUAGE plpgsql;

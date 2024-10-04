@@ -2,12 +2,12 @@
 {{template "base" .}}
 {{end}}
 
-{{define "summary"}}all posts{{end}}
+{{define "summary"}}{{.Summary}}{{end}}
 
-{{define "title"}}Posts{{end}}
+{{define "title"}}{{.Title}}{{end}}
 
 {{block "content" .}}
-<h1>All Posts</h1>
+<h1>{{.Summary}}</h1>
 <div class="cards">
   {{range .Thumbs}}
   <a href="/posts/{{.Link}}" aria-label="{{.Title}}">

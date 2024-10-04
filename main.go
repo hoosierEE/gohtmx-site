@@ -151,13 +151,9 @@ func main() {
 		}
 		username := r.FormValue("username")
 		password := r.FormValue("password")
-		user, err := users.Get(pool, username)
+		match, err := users.CheckPW(pool, username, password)
 		if err != nil {
-			log.Print("users.Get(\"", username, "\") error:", err)
-		}
-		match, err := users.ComparePW(password, user.Pass)
-		if err != nil {
-			log.Print("users.ComparePW() fail:", err)
+			log.Printf("users.CheckPW fail:%q", err)
 		}
 		if match {
 			sessionToken := uuid.NewString()
@@ -189,7 +185,7 @@ func main() {
 				}{username, pathParts[2]})
 			}
 		} else {
-			log.Print("unauthorized user login attempt:", username)
+			log.Printf("bad login attempt:%q", username)
 			w.WriteHeader(http.StatusUnauthorized)
 			data := struct {
 				Username string
@@ -265,8 +261,66 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("GET /papers", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Publications",
+			Summary: "Selected Publications",
+		}
+		if sess, ok := getSession(r); ok {
+			site.Profile = sess.username
+		}
+
+		site.Thumbs = []content.Thumbnail{
+			{
+				Link:    "intellisys2023.pdf",
+				Title:   "Detecting Standard Library Functions in Obfuscated Code",
+				Summary: "Binary analysis helps find low-level system bugs in embed- ded systems, middleware, and Internet of Things (IoT) devices. However, obfuscation makes static analysis more challenging. In this work we use machine learning to detect standard library functions in compiled code which has been heavily obfuscated. First we create a C library func- tion dataset augmented by obfuscation and diverse compiler options. We then train an ensemble of Paragraph Vector-Distributed Memory (PV- DM) models on this dataset, and combine their predictions with simple majority voting. Although the average accuracy of individual PV-DM classifiers is 68%, the ensemble is 74% accurate. Finally, we train a sepa- rate model on the graph structure of the disassembled data. This graph classifier is 64% accurate on its own, but does not improve accuracy when added to the ensemble. Unlike previous work, our approach works even with heavy obfuscation, an advantage we attribute to increased diversity of our training data and increased capacity of our ensemble model.",
+				Date:    "September 2023",
+			},
+			{
+				Link:    "aisc2022.pdf",
+				Title:   "Data Augmentation for Code Analysis",
+				Summary: "A key challenge of applying machine learning techniques to binary data is the lack of a large corpus of labeled training data. One solution to the lack of real-world data is to create synthetic data from real data through augmentation. In this paper, we demonstrate data augmentation techniques suitable for source code and compiled binary data. By augmenting existing data with semantically-similar sources, training set size is increased, and machine learning models better generalize to unseen data.",
+				Date:    "September 2022",
+			},
+			{
+				Link:    "inlocus.pdf",
+				Title:   "Data Distillation at the Network's Edge: Exposing Programmable Logic with InLocus",
+				Summary: "With proliferating sensor networks and Internet of Things-scale devices, networks are increasingly diverse and heterogeneous. To enable the most efficient use of network bandwidth with the lowest possible latency, we propose InLocus, a stream-oriented architecture situated at (or near) the network's edge which balances hardware-accelerated performance with the flexibility of asynchronous software-based control. In this paper we utilize a flexible platform (Xilinx Zynq SoC) to compare microbenchmarks of several InLocus implementations: naive JavaScript, Handwritten C, and High-Level Synthesis (HLS) in programmable hardware.",
+				Date:    "July 2018",
+			},
+			{
+				Link:    "offloading.pdf",
+				Title:   "Offloading Collective Operations to Programmable Logic",
+				Summary: "In this article, the authors present a framework for offloading collective operations to programmable logic for use in applications using the Message Passing Interface (MPI). They evaluate their approach on the Xilinx Zynq system on a chip and the NetFPGA, a network interface card based on a field-programmable gate array. Results are presented from microbenchmarks and a benchmark scientific application.",
+				Date:    "September 2017",
+			},
+		}
+		assert(ts["papers"].ExecuteTemplate(w, "papers", site))
+	})
+
+	http.HandleFunc("GET /projects", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Projects",
+			Summary: "Selected Projects",
+		}
+		if sess, ok := getSession(r); ok {
+			site.Profile = sess.username
+		}
+		// site.Thumbs, err = content.GetThumbnails(pool, -1)
+		// if err != nil {
+		// 	log.Printf("[thumbnails] %v", err)
+		// 	assert(ts["404"].ExecuteTemplate(w, "404", nil))
+		// 	return
+		// }
+		assert(ts["projects"].ExecuteTemplate(w, "projects", site))
+	})
+
 	http.HandleFunc("GET /posts", func(w http.ResponseWriter, r *http.Request) {
-		site := Site{}
+		site := Site{
+			Title:   "Posts",
+			Summary: "All Posts",
+		}
 		if sess, ok := getSession(r); ok {
 			site.Profile = sess.username
 		}
@@ -274,6 +328,7 @@ func main() {
 		if err != nil {
 			log.Printf("[thumbnails] %v", err)
 			assert(ts["404"].ExecuteTemplate(w, "404", nil))
+			return
 		}
 		assert(ts["posts"].ExecuteTemplate(w, "posts", site))
 	})
@@ -282,8 +337,6 @@ func main() {
 		site := Site{
 			Title:   "Alex Shroyer",
 			Summary: "research and hobbies of a computer engineer",
-			Content: "",
-			Profile: "",
 			Thumbs:  []content.Thumbnail{},
 		}
 		if sess, ok := getSession(r); ok {
@@ -333,8 +386,10 @@ func parseTemplates(prefix string) Templates {
 		"404",
 		"cv",
 		"index",
+		"papers",
 		"post",
 		"posts",
+		"projects",
 	}
 	for _, h := range html {
 		name := prefix + h + ".html"

@@ -1,0 +1,34 @@
+This is a normal sentence in a normal paragraph. The client can wrap long lines if it wants.
+
+This is a separate paragraph (A) from the starting one.
+Blank lines are rendered verbatim, so this paragraph follows the previous one marked (A) but there's no extra blank between them.
+
+
+Above this paragraph there should be two extra blank lines.
+
+* unordered
+* lists
+* only
+
+# This is an h1 heading
+It can have a paragraph under but there's no nesting of sections.
+
+### This is an h3 heading
+It's fine to skip order from h1 to h3 or have an h3 by itself.
+
+##This is an h2 heading.
+
+Below are two links to the same url:
+
+=> www.example.com This is a link to "www.example.com"
+=> www.example.com
+
+> blockquote looks like this
+
+Finally there is preformatted text which starts with 3 backticks:
+
+```
+preformatted text here
+```
+
+And that's all of it.
