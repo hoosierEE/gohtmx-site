@@ -57,8 +57,6 @@ func getSession(r *http.Request) (session, bool) {
 	return session{}, false
 }
 
-var clickCounter = 0
-
 func main() {
 	const login_dismiss = `<div id="login-container" class="ease-all" style="height:0;opacity:0"></div>`
 	const login_anchor = `<a id="login-logout" href="#" hx-get="/profile" hx-target="#login-container" hx-swap="outerHTML">Login</a>`
@@ -255,35 +253,6 @@ func main() {
 		// 	return
 		// }
 		assert(ts["projects"].ExecuteTemplate(w, "projects", site))
-	})
-
-	http.HandleFunc("GET /example", func(w http.ResponseWriter, r *http.Request) {
-		clickCounter = 1
-		w.Write(
-			[]byte(`<div id="box" class="ease-all htmx-1" hx-get="/example1" hx-swap="outerHTML"> <p>clickCounter: ` + strconv.Itoa(clickCounter) + `</p> </div>`))
-	})
-
-	http.HandleFunc("GET /example1", func(w http.ResponseWriter, r *http.Request) {
-		clickCounter += 1
-		w.Write(
-			[]byte(`<div id="box" class="ease-all htmx-2" hx-get="/example2" hx-swap="outerHTML"></div>`))
-	})
-
-	http.HandleFunc("GET /example2", func(w http.ResponseWriter, r *http.Request) {
-		clickCounter += 1
-		w.Write(
-			[]byte(`<div id="box" class="ease-all htmx-0" hx-get="/example" hx-swap="outerHTML"> <p>clickCounter: ` + strconv.Itoa(clickCounter) + `</p> </div>`))
-	})
-
-	/// TESTING
-	http.HandleFunc("GET /example-login", func(w http.ResponseWriter, r *http.Request) {
-		clickCounter += 1
-		w.Write([]byte(`<div id="box-login-overlay" hx-swap="outerHTML" hx-get="/cancel-overlay" class="ease-all" style="height:3em">active</div>`))
-	})
-
-	http.HandleFunc("GET /cancel-overlay", func(w http.ResponseWriter, r *http.Request) {
-		clickCounter += 1
-		w.Write([]byte(`<div id="box-login-overlay" class="ease-all" style="height:0;opacity:0"></div>`))
 	})
 
 	http.HandleFunc("GET /cv", func(w http.ResponseWriter, r *http.Request) {
