@@ -23,7 +23,7 @@ func main() {
 		log.Panic(err)
 	}
 	for _, path := range paths {
-		err := addPost(pool, path, "alex_shroyer")
+		err := addPost(pool, os.Args[1], path, "alex_shroyer")
 		if err != nil {
 			log.Print(path)
 			log.Panic(err)
@@ -31,14 +31,14 @@ func main() {
 	}
 }
 
-func addPost(pool *pgxpool.Pool, path os.DirEntry, author string) error {
+func addPost(pool *pgxpool.Pool, prefix string, path os.DirEntry, author string) error {
 	nom := path.Name()
 	title := strings.Join(strings.Split(nom[:len(nom)-5], "-")[3:], " ")
 	date := nom[:10]
 	query := `
 	INSERT INTO posts (link, title, author_id, summary, created_at, updated_at)
 	VALUES ($1, $2, (SELECT id FROM users WHERE username = $3), $4, $5, $5)`
-	file, err := os.Open("./public/posts/" + nom)
+	file, err := os.Open(prefix + "/" + nom)
 	if err != nil {
 		log.Panic(err)
 	}

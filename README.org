@@ -3,7 +3,7 @@ The purpose of this repo is learning.
 My career has so far avoided webdev, but occasionally I encounter a problem that a dynamic site would solve.
 
 Even though "nobody got fired for picking React", it seems overkill for the kinds of things I want to make.
-On the other hand, htmx can be a modest incremental addition of dynamic features to otherwise static web pages, which is in my comfort zone.
+On the other hand, [[https://htmx.org/][htmx]] incrementally adds dynamic features to otherwise static web pages, which is in my comfort zone.
 
 The backend for an htmx site could be implemented in any programming language.
 I decided to take the opportunity to learn a new language and chose Go.
@@ -21,6 +21,11 @@ Perhaps after building an MVP in Go I'll then try it again in Gleam.
 ** About htmx:
 - I'm more surprised that HTML doesn't /already/ support some of these features
 - seems like a good 80% solution for several common kinds of applications, and doesn't preclude you from using other frameworks
+
+* Developing
+Prerequisites: [[https://www.postgresql.org/][postgres]], [[https://github.com/air-verse/air][air]]
+
+Run: =./developing.sh= to recreate the db, compile, and run (recompiling as files change).
 
 * What's here?
 Web server:

@@ -1,14 +1,22 @@
+.htmx-0{height:10em;width:10em;background:white}
+.htmx-1{height:20em;width:20em;background:lightblue}
+.htmx-2{height:1em;width:20em;background:lightgray}
+
 #addComment{padding:1em 0}
-#login-container{display:flex;position:fixed;width:100vw;height:100vh;background:#222a;opacity:1;z-index:9998}
-#login-content h3,.abstract,.date-author,.figure,h1,footer{text-align:center}
-#login-content{background:var(--bg);height:15em;width:20em;margin:auto;padding:3em;box-shadow:0 5px 5px 0 #0005}
-#login-target{z-index:9999}
+#box-login-overlay{background:#2226;transition:all 1s ease}
+#login-container{display:flex;position:fixed;width:100vw;background:#222a}
+#login-form *{border-radius:3px}
+#login-form h3,.abstract,.date-author,.figure,h1,footer{text-align:center}
+#login-form{background:var(--bg);height:15em;width:20em;margin:auto;padding:3em;box-shadow:0 5px 5px 0 #0005}
+.ease-all{transition:all .2s ease}
+
+/* .login-dismiss{height:0;opacity:0} */
+
 .about-section{display:flex;align-items:center;gap:1em}
 .abstract{font-style:italic;font-size:large;max-width:70%;margin:auto}
 .card .date{text-align:right;font-size:x-small}
-.card h3{margin:0 0 .5em}
-.card h3{text-decoration:underline}
-.card,.close-button,#login-content{border-radius:3px}
+.card h3{margin:0 0 .5em;text-decoration:underline}
+.card,.close-button,#login-form{border-radius:3px}
 .card:hover{box-shadow:0 1px 3px 0 #0005;}
 .cards a{text-decoration:none}
 .cards{margin:1em auto;display:grid;align-items:center;grid-template-columns: 1fr 1fr;gap:.8em;place-items:stretch}
@@ -22,7 +30,7 @@
 .figure{display:block;margin:auto}
 .footdef sup{font-size:unset}
 .footdef{display:flex;gap:5px;margin-left:-.5em;font-size:smaller}
-.invisible{animation: fadeOut .5s ease-out forwards;animation-fill-mode:forwards}
+
 .login-form-container{max-width:10em;margin:2em auto}
 .metadata,textarea::placeholder,input::placeholder{color:rgb(var(--fr),.4)}
 .news li span.date{margin-left:1em;float:right}
@@ -36,7 +44,6 @@
 .video-container::before{content:"";display:block;padding-top:56.25%}
 .video-container{margin:2em 0;position:relative;width:100%;max-width:var(--mw)}
 :root{--bg:#fff7ea;--fg:#000;--fr:0,0,0;--a0:0,115,210;--a1:#eee7da;--a2:#058;--mw:50em;--cw:#fffaf0}
-@keyframes fadeOut{0%{opacity:1}to{opacity:0;display:none}}
 @media screen and (max-width:600px){.cards{grid-template-columns:1fr}}
 @media(prefers-color-scheme:dark){:root{--fg:#fff7ea;--fr:255,247,234;--bg:#448;--a0:0,97,153;--a1:#66a;--a2:#024} img[src$=".svg"]{filter:invert(.8)}}
 a,body{color:var(--fg)}
@@ -62,6 +69,7 @@ nav a,footer *{color:var(--cw)}
 nav a:hover{text-decoration:underline}
 nav a{text-decoration:none}
 nav{margin:auto;padding:1em;gap:1em;max-width:var(--mw);display:flex;flex-wrap:wrap;justify-content:space-between}
+nav div{display:flex;gap:0.5em}
 ol.news{list-style:none;padding:0;margin:0}
 table{border-spacing:2px 1px;margin:auto}
 tbody tr:nth-child(2n + 1){background:var(--a1)}

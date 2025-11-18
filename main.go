@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"strconv"
+
 	// local pacakges
 	"siteserver/content"
 	"siteserver/users"
@@ -55,7 +57,11 @@ func getSession(r *http.Request) (session, bool) {
 	return session{}, false
 }
 
+var clickCounter = 0
+
 func main() {
+	const login_dismiss = `<div id="login-container" class="ease-all" style="height:0;opacity:0"></div>`
+	const login_anchor = `<a id="login-logout" href="#" hx-get="/profile" hx-target="#login-container" hx-swap="outerHTML">Login</a>`
 	pool, err := content.New()
 	if err != nil {
 		log.Panic(err)
@@ -110,21 +116,21 @@ func main() {
 	})
 
 	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
+		w.Write([]byte(login_dismiss))
+
 	})
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session_token")
-		if err != nil {
+		if err == nil {
+			delete(sessions, c.Value)
+		} else {
 			if err == http.ErrNoCookie {
 				w.WriteHeader(http.StatusUnauthorized)
-				goto cleanup
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
 			}
-			w.WriteHeader(http.StatusBadRequest)
-			goto cleanup
 		}
-		delete(sessions, c.Value)
-	cleanup:
 		// TODO: could this be better handled somewhere else?
 		parsedURL, err := url.Parse(r.Referer())
 		if err != nil {
@@ -141,7 +147,8 @@ func main() {
 		}
 		log.Print("logged out user")
 		http.SetCookie(w, &http.Cookie{Name: "session_token", Value: "", Expires: time.Now()})
-		w.Write([]byte(`<a id="login-logout" href="#" hx-get="/profile" hx-target="#login-target">Login</a>`))
+		w.Write([]byte(login_dismiss + login_anchor))
+
 	})
 
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +164,7 @@ func main() {
 		}
 		if match {
 			sessionToken := uuid.NewString()
-			expiresAt := time.Now().Add(3600 * time.Second) // auto logout after 60*60 seconds
+			expiresAt := time.Now().Add(3600 * time.Second)
 			sessions[sessionToken] = session{
 				username: username,
 				expires:  expiresAt,
@@ -167,8 +174,8 @@ func main() {
 				Value:   sessionToken,
 				Expires: expiresAt,
 			})
-			w.Write([]byte(`<div id="login-container" class="invisible"></div>`))
-			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout ` + username + `</a>`))
+			w.Write([]byte(login_dismiss))
+			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout `+username+`</a>`))
 
 			// TODO: could this be better handled somewhere else?
 			// if we're on a post page, there's an add-comment box that should appear after login succeeds
@@ -231,6 +238,52 @@ func main() {
 		} else {
 			log.Print("no key `post` in ts")
 		}
+	})
+
+	http.HandleFunc("GET /projects", func(w http.ResponseWriter, r *http.Request) {
+		site := Site{
+			Title:   "Projects",
+			Summary: "Selected Projects",
+		}
+		if sess, ok := getSession(r); ok {
+			site.Profile = sess.username
+		}
+		// site.Thumbs, err = content.GetThumbnails(pool, -1)
+		// if err != nil {
+		// 	log.Printf("[thumbnails] %v", err)
+		// 	assert(ts["404"].ExecuteTemplate(w, "404", nil))
+		// 	return
+		// }
+		assert(ts["projects"].ExecuteTemplate(w, "projects", site))
+	})
+
+	http.HandleFunc("GET /example", func(w http.ResponseWriter, r *http.Request) {
+		clickCounter = 1
+		w.Write(
+			[]byte(`<div id="box" class="ease-all htmx-1" hx-get="/example1" hx-swap="outerHTML"> <p>clickCounter: ` + strconv.Itoa(clickCounter) + `</p> </div>`))
+	})
+
+	http.HandleFunc("GET /example1", func(w http.ResponseWriter, r *http.Request) {
+		clickCounter += 1
+		w.Write(
+			[]byte(`<div id="box" class="ease-all htmx-2" hx-get="/example2" hx-swap="outerHTML"></div>`))
+	})
+
+	http.HandleFunc("GET /example2", func(w http.ResponseWriter, r *http.Request) {
+		clickCounter += 1
+		w.Write(
+			[]byte(`<div id="box" class="ease-all htmx-0" hx-get="/example" hx-swap="outerHTML"> <p>clickCounter: ` + strconv.Itoa(clickCounter) + `</p> </div>`))
+	})
+
+	/// TESTING
+	http.HandleFunc("GET /example-login", func(w http.ResponseWriter, r *http.Request) {
+		clickCounter += 1
+		w.Write([]byte(`<div id="box-login-overlay" hx-swap="outerHTML" hx-get="/cancel-overlay" class="ease-all" style="height:3em">active</div>`))
+	})
+
+	http.HandleFunc("GET /cancel-overlay", func(w http.ResponseWriter, r *http.Request) {
+		clickCounter += 1
+		w.Write([]byte(`<div id="box-login-overlay" class="ease-all" style="height:0;opacity:0"></div>`))
 	})
 
 	http.HandleFunc("GET /cv", func(w http.ResponseWriter, r *http.Request) {
@@ -297,23 +350,6 @@ func main() {
 			},
 		}
 		assert(ts["papers"].ExecuteTemplate(w, "papers", site))
-	})
-
-	http.HandleFunc("GET /projects", func(w http.ResponseWriter, r *http.Request) {
-		site := Site{
-			Title:   "Projects",
-			Summary: "Selected Projects",
-		}
-		if sess, ok := getSession(r); ok {
-			site.Profile = sess.username
-		}
-		// site.Thumbs, err = content.GetThumbnails(pool, -1)
-		// if err != nil {
-		// 	log.Printf("[thumbnails] %v", err)
-		// 	assert(ts["404"].ExecuteTemplate(w, "404", nil))
-		// 	return
-		// }
-		assert(ts["projects"].ExecuteTemplate(w, "projects", site))
 	})
 
 	http.HandleFunc("GET /posts", func(w http.ResponseWriter, r *http.Request) {
