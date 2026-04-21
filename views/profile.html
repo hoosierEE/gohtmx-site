@@ -1,7 +1,7 @@
 {{block "profile" .}}
 <div id="login-container"
      class="ease-all"
-     style="height:50vh;opacity:1"
+     style="height:100vh;opacity:1"
      hx-get="/login-cancel"
      hx-target="#login-container"
      hx-trigger="click target:#login-container, escapePressed from:body"
@@ -21,7 +21,7 @@
             <input id="login-password" name="password" type="password" placeholder="password"
                    autocomplete="current-password" required>
             <div id="login-error-message" class="error">{{.Error}}</div>
-            <input type="submit" value="Login" class="" style="">
+            <input type="submit" value="sign in" class="" style="">
         </form>
     </div>
 </div>

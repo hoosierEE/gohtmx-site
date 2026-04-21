@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -43,7 +43,7 @@ func addPost(pool *pgxpool.Pool, prefix string, path os.DirEntry, author string)
 		log.Panic(err)
 	}
 	defer file.Close()
-	htmlContent, err := ioutil.ReadAll(file)
+	htmlContent, err := io.ReadAll(file)
 	if err != nil {
 		log.Panic(err)
 	}

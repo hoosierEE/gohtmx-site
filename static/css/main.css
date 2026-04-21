@@ -1,23 +1,19 @@
-.htmx-0{height:10em;width:10em;background:white}
-.htmx-1{height:20em;width:20em;background:lightblue}
-.htmx-2{height:1em;width:20em;background:lightgray}
-
 #addComment{padding:1em 0}
-#box-login-overlay{background:#2226;transition:all 1s ease}
-#login-container{display:flex;position:fixed;width:100vw;background:#222a}
+#login-container{display:flex;position:fixed;width:100vw;background:#222a;z-index:1}
 #login-form *{border-radius:3px}
 #login-form h3,.abstract,.date-author,.figure,h1,footer{text-align:center}
 #login-form{background:var(--bg);height:15em;width:20em;margin:auto;padding:3em;box-shadow:0 5px 5px 0 #0005}
-.ease-all{transition:all .2s ease}
+#profile-container{margin:auto;max-width:var(--mw);display:flex;flex-direction:row-reverse}
+#profile-modal{margin-top:-.4em;height: 3em;position: fixed;background:var(--bg)}
 
-/* .login-dismiss{height:0;opacity:0} */
+.ease-all{transition:all .2s ease}
 
 .about-section{display:flex;align-items:center;gap:1em}
 .abstract{font-style:italic;font-size:large;max-width:70%;margin:auto}
 .card .date{text-align:right;font-size:x-small}
 .card h3{margin:0 0 .5em;text-decoration:underline}
 .card,.close-button,#login-form{border-radius:3px}
-.card:hover{box-shadow:0 1px 3px 0 #0005;}
+.card:hover, input[type=submit]{box-shadow:0 1px 3px 0 #0005;}
 .cards a{text-decoration:none}
 .cards{margin:1em auto;display:grid;align-items:center;grid-template-columns: 1fr 1fr;gap:.8em;place-items:stretch}
 .card{box-shadow:0 0px 1px 0 #000a;padding:.5em;height:calc(100% - 1em)}
@@ -31,13 +27,12 @@
 .footdef sup{font-size:unset}
 .footdef{display:flex;gap:5px;margin-left:-.5em;font-size:smaller}
 
-.login-form-container{max-width:10em;margin:2em auto}
 .metadata,textarea::placeholder,input::placeholder{color:rgb(var(--fr),.4)}
 .news li span.date{margin-left:1em;float:right}
 .news li{margin:.5em 0}
 .org-src-container{background:var(--a1);padding:.5em;margin:1em -.5em;border:1px solid var(--a2);overflow-x:auto}
 .person-icon svg{display:inline;height:1.2em;width:1.2em;border:1px solid var(--cw);border-radius:50%}
-.person-icon{vertical-align:text-top}
+.person-icon{cursor:pointer;vertical-align:text-top}
 .pfp{width:9em;height:8.5em;border-radius:50%}
 .social a{text-decoration:none}
 .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%}
@@ -62,7 +57,7 @@ header{background:rgb(var(--a0))}
 hr{height:1px;margin:2em auto;border:0;background:repeating-radial-gradient(circle at 50%,transparent,var(--fg)46px,var(--bg)46px,var(--bg)48px,var(--fg)48px,var(--fg)52px,var(--bg)52px,var(--bg)54px,var(--fg)54px,transparent 100px)}
 img{max-width:var(--mw)}
 input[type=submit]:hover,.close-button:hover{background:color(from var(--a1) srgb 0 0 0/.2)}
-input[type=submit]{cursor:pointer}
+input[type=submit]{cursor:pointer;height:2.5em;width:100%;margin:2em auto;padding:.2em}
 li{padding:.2em 0}
 main{margin:auto;padding:2em;max-width:var(--mw);text-align:justify}
 nav a,footer *{color:var(--cw)}

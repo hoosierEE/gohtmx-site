@@ -60,10 +60,10 @@ FROM posts p
 JOIN users u ON p.author_id = u.id
 WHERE p.link = $1`
 	rows, err := pool.Query(context.Background(), query, link)
-	defer rows.Close()
 	if err != nil {
 		return Post{}, err
 	}
+	defer rows.Close()
 	return pgx.CollectOneRow(rows, pgx.RowToStructByName[Post])
 }
 
@@ -96,9 +96,9 @@ SELECT u.username, time_format(c.created_at) AS when, c.content
 FROM rows c JOIN users u ON
 c.user_id = u.id`
 	rows, err := pool.Query(context.Background(), query, postID, userID, content)
-	defer rows.Close()
 	if err != nil {
 		return []Comment{}, err
 	}
+	defer rows.Close()
 	return pgx.CollectRows(rows, pgx.RowToStructByName[Comment])
 }

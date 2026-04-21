@@ -2,15 +2,13 @@ package main
 
 import (
 	"html/template"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
-
-	"strconv"
 
 	// local pacakges
 	"siteserver/content"
@@ -115,7 +113,15 @@ func main() {
 
 	http.HandleFunc("GET /login-cancel", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(login_dismiss))
+	})
 
+	http.HandleFunc("GET /profile-modal", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`
+        <div id="profile-container" class="ease-all">
+            <div id="profile-modal" class="card" style="display:flex">
+                <a href="#" hx-get="/logout">logout</a>
+            </div>
+        </div>`))
 	})
 
 	http.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
@@ -173,7 +179,10 @@ func main() {
 				Expires: expiresAt,
 			})
 			w.Write([]byte(login_dismiss))
-			w.Write([]byte(`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" href="#" hx-get="/logout">Logout `+username+`</a>`))
+			w.Write([]byte(
+				`<a id="login-logout" hx-swap-oob="true" hx-swap="outerHTML" hx-target="#profile-container" href="#" hx-get="/profile-modal">`+
+					username+
+					`</a>`))
 
 			// TODO: could this be better handled somewhere else?
 			// if we're on a post page, there's an add-comment box that should appear after login succeeds
@@ -218,9 +227,9 @@ func main() {
 			return
 		}
 		defer file.Close()
-		fileContent, err := ioutil.ReadAll(file)
+		fileContent, err := io.ReadAll(file)
 		if err != nil {
-			log.Printf("ioutil.Readall(file) error: %v", err)
+			log.Printf("io.Readall(file) error: %v", err)
 			return
 		}
 		data.Content = template.HTML(string(fileContent)) // what type?
@@ -262,9 +271,9 @@ func main() {
 			return
 		}
 		defer file.Close()
-		fileContent, err := ioutil.ReadAll(file)
+		fileContent, err := io.ReadAll(file)
 		if err != nil {
-			log.Printf("ioutil.Readall(file) error: %v", err)
+			log.Printf("io.Readall(file) error: %v", err)
 			return
 		}
 		data := Site{}
